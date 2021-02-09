@@ -1,0 +1,291 @@
+Create a domain, projects, users, and roles
+-------------------------------------------
+  
+The Identity service provides authentication services for each OpenStack service. 
+The authentication service uses a combination of domains, projects, users, and roles.
+
+This guide uses a service project that contains a unique user for each service that you add to your environment. 
+Create the service project:
+
+!!!Ensure using Stein repo only!!!
+sudo yum install centos-release-openstack-stein
+yum upgrade
+yum install python-openstackclient
+sudo -i
+. admin-openrc
+
+$ openstack project create --domain default --description "Service Project" service
+
++-------------+----------------------------------+
+| Field       | Value                            |
++-------------+----------------------------------+
+| description | Service Project                  |
+| domain_id   | default                          |
+| enabled     | True                             |
+| id          | 24ac7f19cd944f4cba1d77469b2a73ed |
+| is_domain   | False                            |
+| name        | service                          |
+| parent_id   | default                          |
++-------------+----------------------------------+
+Regular (non-admin) tasks should use an unprivileged project and user. As an example, this guide creates the demo project and user.
+
+Create the demo project:
+
+$ openstack project create --domain default --description "Demo Project" demo
+
++-------------+----------------------------------+
+| Field       | Value                            |
++-------------+----------------------------------+
+| description | Demo Project                     |
+| domain_id   | default                          |
+| enabled     | True                             |
+| id          | 231ad6e7ebba47d6a1e57e1cc07ae446 |
+| is_domain   | False                            |
+| name        | demo                             |
+| parent_id   | default                          |
++-------------+----------------------------------+
+ Note
+
+Do not repeat this step when creating additional users for this project.
+
+Create the demo user:
+
+$ openstack user create --domain default --password-prompt demo
+
+User Password:
+Repeat User Password:
++---------------------+----------------------------------+
+| Field               | Value                            |
++---------------------+----------------------------------+
+| domain_id           | default                          |
+| enabled             | True                             |
+| id                  | aeda23aa78f44e859900e22c24817832 |
+| name                | demo                             |
+| options             | {}                               |
+| password_expires_at | None                             |
++---------------------+----------------------------------+
+Create the user role:
+
+$ openstack role create user
+
++-----------+----------------------------------+
+| Field     | Value                            |
++-----------+----------------------------------+
+| domain_id | None                             |
+| id        | 997ce8d05fc143ac97d83fdfb5998552 |
+| name      | user                             |
++-----------+----------------------------------+
+Add the user role to the demo project and user:
+
+$ openstack role add --project demo --user demo user
+
+You can repeat this procedure to create additional projects and users
+
+-------------------------------------------------------------------------------
+//OpenStackQueens.ova : CentOS 7 Server with OpenStack Queens version installed.  
+//Machine has essential components like Keystone, Glance, Nova, Neutron, Cinder along with Horizon Dasboard
+IP: 192.168.56.101 (enp0s3)      hostname: controller
+Login: root  / openstack         Password: wipro123
+//root / wipro123
+
+cat /etc/hostname
+set hostname  (controller)
+
+openstack hypervisor list
+
+openstack domain create nokia
+
+** to remove a domain it must first be disables
+openstack domain set --disable foo
+openstack domain delete foo
+
+
+//show created domains
+openstack domain list
+
+//create a project under Nokia domain
+openstack project create --domain nokia project-cloud --description "Cloud project" demo
+
+//List all projects under Nokia domain
+openstack project list --domain nokia
+
+//Create a second project under Nokia domain
+openstack project create --domain nokia development-cloud --description "Dev Cloud" demo
+
+//create user "John" and add to specific project under a domain, then set password
+openstack user create --domain nokia --project project-cloud john
+openstack user set --password password john
+
+openstack role list
+
+//add admin rool to John under for specific project (not domain wide)
+opesnatack roll add --domain nokia --project project-cloud --user john admin
+
+openstack user create --domain nokia --project development-cloud kamal
+openstack rool add --user-domain nokia --project development-cloud --user kamal user
+Alter rc files and source to access specific users with necessary roles
+
+openstack image create --files
+openstackimage create --file /path/to/image --disk-format qcow2 --private name
+openstack image list
+openstack image show <ID>
+openstack image delete <ID>
+
+openstack flavor create --ram 100 --vcpu 1 small
+openstack flavor list
+openstack flavor create --private --ram 100 --vcpu 1 small
+
+
+----------------------------------------
+FC19K-6JX81-084TP-A7ZE9-Y6KV0
+ZG79K-80W15-081MP-Z5XNT-PGRU2
+AY542-89Y8H-48E4Y-5DZEC-YKAF2
+CV780-22ED2-M89XQ-R7NXT-PY8Y4
+GV59K-6RZ4J-08DHP-A6PQC-NY894
+VF31K-4DY92-48DYY-U6ZXE-ZQ2C6
+CY3RH-FXXD6-M8EZP-TXMQ9-P3AD0
+UC312-ALD4H-M84EP-ENNQC-Y7KF8
+YZ11K-DVZDJ-080FQ-YPXQT-MCUF6
+AZ11K-00D52-489AQ-CPYNT-Y7280
+ZU14H-28E12-H81VQ-DEN7X-YY8G6
+GU7DR-08W8P-4899P-17Q5E-Z72UA
+
+source admin-openrc
+env | grep -i os
+openstack catalog list
+ip a
+free -m
+openstack hypervisor list
+virsh list --all
+
+source admin-openrc
+openstack catalog list
+   
+openstack domain create nokia
+openstack domain list
+openstack project create --domain nokia project-cloud
+openstack project list --domain nokia
+openstack project list
+openstack project create --domain nokia devlopmenet-cloud
+openstack user create --domain nokia --project project-cloud john
+
+openstack user set --password password john
+openstack role list
+openstack role add --user-domain nokia --user-project project-cloud --user john admin
+
+openstack role add --user-domain nokia --project project-cloud --user john admin
+
+openstack user create --domain nokia --project devlopmenet-cloud kamal
+
+openstack user set --password password kamal
+openstack role add --user-domain nokia --project development-cloud --user kamal user
+ openstack role add --user-domain nokia --project devlopmenet-cloud --user kamal user
+ openstack role assignment list
+ openstack role assignment list --name
+   
+ ls -lrt
+ cp admin-openrc john_rc
+   
+vi john_rc
+source john_rc
+env | grep OS
+env | grep OS_USER
+openstack catalog list
+openstack domain list
+ls -lrt
+cp john_rc kamal_rc
+vi kamal_rc
+source kamal_rc
+env | grep USER
+openstack catalog list
+vi kamal_rc
+  source kamal_rc
+   63  openstack catalog list
+   64  vi kamal_rc
+   65  source kamal_rc
+   66  openstack project list
+   67  openstack domain list
+   68  ls -lrt
+   69  source john_rc
+   70  openstack domain list
+   71  openstack user create robert
+   72  openstack user show robert
+   73  openstack user delete robert
+   74  openstack user create --domain nokia --project project-cloud robert
+   75  openstack user set --password password robert
+   76  openstack role add --user-domain nokia --project project-cloud --user robert user
+   77  history
+   78  ls -lrt
+   79  cp john_rc robert_rc
+   80  vi robert_rc
+   81  source robert_rc
+   82  openstack project list
+   83  ls -lrt
+   84  pwd
+   85  openstack image create --file /root/cirros-0.4.0-x86_64-disk.img --disk-format qcow2 --private cirros
+   86  openstack image list
+   87  openstack image show 58f93f66-e7db-40cc-b223-b23a18a6c81b
+   88  openstack image show b9663341-7f37-4054-aa19-20c91882eb87
+   89  openstack image delete 58f93f66-e7db-40cc-b223-b23a18a6c81b
+   90  openstack image delete b9663341-7f37-4054-aa19-20c91882eb87
+   91  openstack iamge list
+   92  openstack image list
+   93  env | grep USER
+   94  openstack flavor list
+   95  openstack flavor create --ram 100 --vcpu 1 small
+   96  source john_rc
+   97  openstack flavor create --ram 100 --vcpu 1 small
+   98  openstack flavor list
+   99  openstack flavor show small
+  100  source kamal_rc
+  101  openstack flavor list
+  102  source john_rc
+  103  openstack flavor set --private small
+  104  oepnstack flavor delete small
+  105  openstack flavor delete small
+  106  openstack flavor create --private --ram 100 --vcpu 1 small
+  107  openstack flavor list
+  108  openstack flavor create
+  109  openstack flavor list
+  110  openstack flavor create --private --ram 100 --vcpu 1 small
+  111  openstack flavor show small
+  112  source kamal_rc
+openstack flavor show small
+source robert_rc
+openstack flavor list
+
+follow question 4
+create domain
+create users
+create group
+create flavor
+
+Keypair
+
+openstack has its own shell!
+openstack
+server list
+image list
+network list
+keypair list
+exit
+
+openstack keypair create john > /root/john.pem
+openstack secruity group list
+openstack server create --image cirros --flavor ml.nano --network cloudproject --key-name john --security-group ssh vm3
+
+openstack server list
+openstack floating ip create <IP>
+openstack server add floating ip vm3 <IP>
+
+
+ssh -i john.pem cirros@<IP>
+
+Create a key pair named webkey
+
+
+
+Kindly go with the Queens image which is pre-loaded with Openstack services. Do practise on Domain creation , Project, User, Group, Resources ( Flavor, Image, Keypair, Security Group) 
+​Create a Tenent Network & Provider network . Launch an instance with available resource
+​This is the task for you guys !! Tomorrow, I am also not available will meet you on Wednesday \
+

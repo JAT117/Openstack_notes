@@ -1,0 +1,238 @@
+Keystone
+--------
+
+RBAC Process (ROLE BASED ACCESS CONTROL)
+
+Token based authentication system
+Each service has an auth model
+Roles define user rights within the cloud
+Roles are created in Keystone by admin
+Each Openstack Service has a polciy engine module and access control policies defined in "policy.json"
+
+
+https://ask.openstack.org/en/question/101127/how-to-check-if-keystone-is-running/
+
+change hosts
+
+sudo cat /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4 controller
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+
+Replace ADMIN_PASS with a suitable password for an administrative user.
+
+!!!Ensure using Rocky repo only!!!
+**stein has been shown to be buggy
+
+yum install https://rdoproject.org/repos/rdo-release.rpm
+yum install python-openstackclient
+~~yum install openstack-selinux~~
+
+//Prerequisites:
+//Before you install and configure the Identity service, you must create a database.
+//Use the database access client to connect to the database server as the root user:
+
+
+//MariaDB should be securely installed:
+
+	mysql -u root -p
+	Enter password: 
+	Welcome to the MariaDB monitor.  Commands end with ; or \g.
+	Your MariaDB connection id is 7
+	Server version: 5.5.64-MariaDB MariaDB Server
+
+	Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+	Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+	create DATABASE KEYSTONE
+
+	MariaDB [(none)]> show databases;
+	+--------------------+
+	| Database           |
+	+--------------------+
+	| information_schema |
+	| mysql              |
+	| performance_schema |
+	| test               |
+	+--------------------+
+	4 rows in set (0.00 sec)
+
+	MariaDB [(none)]> 
+	Query OK, 1 row affected (0.00 sec)
+
+	MariaDB [(none)]> show databases;
+	+--------------------+
+	| Database           |
+	+--------------------+
+	| information_schema |
+	| keystone           |
+	| mysql              |
+	| performance_schema |
+	| test               |
+	+--------------------+
+	5 rows in set (0.00 sec)
+
+	MariaDB [(none)]> GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'controller' IDENTIFIED BY 'KEYSTONE_DBPASS';
+	Query OK, 0 rows affected (0.00 sec)
+
+	MariaDB [(none)]> GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' IDENTIFIED BY 'KEYSTONE_DBPASS';
+	Query OK, 0 rows affected (0.00 sec)
+
+	MariaDB [(none)]> exit 
+	Bye
+
+//Default configuration files vary by distribution. You might need to add these sections and options rather than modifying existing sections and options. 
+//Also, an ellipsis (...) in the configuration snippets indicates potential default configuration options that you should retain.
+
+//This guide uses the Apache HTTP server with mod_wsgi to serve Identity service requests on ports 5000 and 35357. 
+//By default, the keystone service still listens on these ports. 
+//Therefore, this guide manually disables the keystone service.
+
+//Run the following command to install the packages:
+
+# yum install -y openstack-keystone httpd mod_wsgi
+
+--- /etc/keystone/keystone.conf
+
+[database] 
+connection = mysql+pymysql://keystone:keystone@controller01/keystone
+
+[token]
+provider = fernet
+
+--- keystone-manage
+
+# su -s /bin/sh -c "keystone-manage db_sync" keystone
+# keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+# keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+
+--- Bootstrap
+
+# keystone-manage bootstrap --bootstrap-password ADMIN_PASS \
+--bootstrap-admin-url http://controller01:35357/v3/ \
+--bootstrap-internal-url http://controller01:5000/v3/ \
+--bootstrap-public-url http://controller01:5000/v3/ \
+--bootstrap-region-id RegionOne
+
+Replace ADMIN_PASS with a suitable password for an administrative user.
+
+# su -s /bin/sh -c "keystone-manage db_sync" keystone
+Initialize Fernet key repositories:
+
+
+//Configure the Apache HTTP server
+//Edit the /etc/httpd/conf/httpd.conf file and configure the ServerName option to reference the controller node:
+
+ServerName controller
+
+//Create a link to the /usr/share/keystone/wsgi-keystone.conf file:
+# ln -s /usr/share/keystone/wsgi-keystone.conf /etc/httpd/conf.d/
+
+//Finalize the installation
+//Start the Apache HTTP service and configure it to start when the system boots:
+
+# systemctl enable httpd.service --now
+
+
+//Configure the administrative account
+
+//SELinux might throw a fit, fix it
+
+------------------- ERROR MESSAGE-----------------
+SELinux is preventing /usr/sbin/httpd from name_bind access on the tcp_socket port 5000.
+
+*****  Plugin catchall_boolean (89.3 confidence) suggests   ******************
+
+If you want to allow httpd to use openstack
+Then you must tell SELinux about this by enabling the 'httpd_use_openstack' boolean.
+
+Do
+setsebool -P httpd_use_openstack 1
+
+*****  Plugin catchall (11.6 confidence) suggests   **************************
+
+If you believe that httpd should be allowed name_bind access on the port 5000 tcp_socket by default.
+Then you should report this as a bug.
+You can generate a local policy module to allow this access.
+Do
+allow this access for now by executing:
+# ausearch -c 'httpd' --raw | audit2allow -M my-httpd
+# semodule -i my-httpd.pp
+
+Additional Information:
+Source Context                system_u:system_r:httpd_t:s0
+Target Context                system_u:object_r:commplex_main_port_t:s0
+Target Objects                port 5000 [ tcp_socket ]
+Source                        httpd
+Source Path                   /usr/sbin/httpd
+Port                          5000
+Host                          N7
+Source RPM Packages           httpd-2.4.6-90.el7.centos.x86_64
+Target RPM Packages           
+Policy RPM                    selinux-policy-3.13.1-252.el7.1.noarch
+Selinux Enabled               True
+Policy Type                   targeted
+Enforcing Mode                Enforcing
+Host Name                     n7
+Platform                      Linux n7 3.10.0-1062.el7.x86_64 #1 SMP Wed Aug 7
+                              18:08:02 UTC 2019 x86_64 x86_64
+Alert Count                   9
+First Seen                    2019-11-04 16:40:51 CST
+Last Seen                     2019-11-05 08:14:38 CST
+Local ID                      d67ebb44-e524-459e-ab89-d5fa785f97f1
+
+Raw Audit Messages
+type=AVC msg=audit(1572963278.28:965): avc:  denied  { name_bind } for  pid=112992 comm="httpd" src=5000 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:commplex_main_port_t:s0 tclass=tcp_socket permissive=0
+
+
+type=SYSCALL msg=audit(1572963278.28:965): arch=x86_64 syscall=bind success=no exit=EACCES a0=5 a1=5609c827f358 a2=10 a3=7ffd5f6136cc items=0 ppid=1 pid=112992 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=(none) ses=4294967295 comm=httpd exe=/usr/sbin/httpd subj=system_u:system_r:httpd_t:s0 key=(null)
+
+Hash: httpd,httpd_t,commplex_main_port_t,tcp_socket,name_bind
+
+------------------------------------
+//stick this inside of admin-openrc 
+#nano admin-openrc
+
+export OS_USERNAME=admin
+export OS_PASSWORD=ADMIN_PASS
+export OS_PROJECT_NAME=admin
+export OS_USER_DOMAIN_NAME=Default
+export OS_PROJECT_DOMAIN_NAME=Default
+export OS_AUTH_URL=http://controller:5000/v3
+export OS_IDENTITY_API_VERSION=3
+
+
+#source FILENAME
+
+#source admin-openrc
+#env | grep -i OS
+# . admin-openrc
+# openstack catalog list
+
+
+#ping controller
+#tail -f keystone.log
+#ls -lrt
+#chown -R keystone:keystone *
+#tail -f /var/log/keystone/keystone.log
+
+127.0.0.1 Localhost and 'controller' as a listed alias
+
+//Commands 
+#yum install -y openstack-keystone apache2 apache2-mod_wsgi
+#yum install openstack-keystone httpd mod_wsgi
+#nano keystone.conf 
+#cat keystone.conf | egrep -v "^$|^#"
+#touch keystone.conf.copy
+#mv keystone.conf keystone.conf.copy
+#cat keystone.conf.copy 
+#cat keystone.conf.copy | egrep -v "^$|^#" > keystone.conf_new
+#cat keystone.conf_new
+#rename keystone.conf_new keystone.conf
+#ls keystone.conf*
+#mv keystone.conf_new keystone.conf
+#cat keystone.conf
+#sudo nano keystone.conf
+#su -s /bin/sh -c "keystone-manage db_sync" keystone  --> for all services in Openstack (i.e heat and nova)
+
+

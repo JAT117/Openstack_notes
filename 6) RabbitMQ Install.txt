@@ -1,0 +1,51 @@
+RabbitMQ install
+---------------
+
+https://success.alienvault.com/s/article/How-do-I-resolve-error-rabbitmq-server-failed
+
+3.6.5.1
+
+#yum install rabbitmq-server
+
+#systemctl enable rabbitmq-server.service
+#systemctl start rabbitmq-server.service
+
+//Add the openstack user:
+#rabbitmqctl add_user openstack password
+
+//Permit configuration, write, and read access for the openstack user:
+#rabbitmqctl set_permissions openstack ".*" ".*" ".*"
+
+#yum install memcached python-memcached
+
+nano /etc/memcached.conf
+OPTIONS="-l 127.0.0.1,::1,controller"
+
+change to binding address??
+
+systemctl enable memcached.service
+systemctl start memcached.service
+
+
+--glances.conf
+[rabbitmq]
+host=localhost
+port=5672
+user=glances
+password=glances
+queue=glances_queue
+
+$ glances --export rabbitmq
+
+10  cd /etc/sysconfig/memcached
+13  sudo nano memcached
+15  systemctl enable memcached.service
+16  systemctl start memcached.service
+17  yum install etcd
+18  cd /etc/etcd
+19  ll
+20  sudo nano etcd.conf 
+21  systemctl enable etcd
+22  systemctl disable  etcd
+23  sudo yum remove etcd
+28  yum install python-pyasn1 

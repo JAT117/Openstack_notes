@@ -1,0 +1,90 @@
+Nova Compute node
+-----------------
+
+ yum install openstack-nova-api openstack-nova-consileauth openstack-nova-conductor \
+  openstack-nova-novncproxy openstack-nova-scheduler
+
+systemctl enable openstack-nova-api.service \
+  openstack-nova-consoleauth openstack-nova-scheduler.service \
+  openstack-nova-conductor.service openstack-nova-novncproxy.service
+
+https://docs.openstack.org/nova/latest/user/cells.html
+
+yum install openstack-nova-api \
+openstack-nova-conductor \
+openstack-nova-novncproxy \
+openstack-nova-scheduler -y
+   
+yum install openstack-nova-api openstack-nova-conductor \
+  openstack-nova-novncproxy openstack-nova-scheduler
+
+[DEFAULT]
+
+#openstack user create --password-prompt openstack
+#openstack user set --domain default --password password nova
+
+nano /etc/nova/conf.d
+
+[DEFAULT]
+# ...
+# ...
+#my_ip = 10.0.0.11
+my_ip = controller
+enabled_apis = osapi_compute,metadata
+transport_url = rabbit://openstack:RABBIT_PASS@controller
+
+
+[vnc]
+enabled = true
+vncserver_listen = 10.10.0.100
+vncserver_proxyclient_address = 10.10.0.100
+
+[api]
+# ...
+auth_strategy = keystone
+
+[keystone_authtoken]
+# ...
+auth_uri = http://controller:5000
+auth_url = http://controller:35357
+memcached_servers = controller:11211
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = nova
+password = password
+
+mysql -u root -p
+
+CREATE DATABASE nova_api;
+CREATE DATABASE nova;
+CREATE DATABASE nova_cell0;
+
+GRANT ALL PRIVILEGES ON nova_api.* TO 'nova'@'localhost' IDENTIFIED BY 'NOVA_DBPASS';
+GRANT ALL PRIVILEGES ON nova_api.* TO 'nova'@'%' IDENTIFIED BY 'NOVA_DBPASS';
+GRANT ALL PRIVILEGES ON nova.* TO 'nova_api'@'localhost' IDENTIFIED BY 'NOVA_DBPASS';
+GRANT ALL PRIVILEGES ON nova.* TO 'nova_api'@'%' IDENTIFIED BY 'NOVA_DBPASS';
+GRANT ALL PRIVILEGES ON nova.* TO 'nova_cell0'@'localhost' IDENTIFIED BY 'NOVA_DBPASS';
+GRANT ALL PRIVILEGES ON nova.* TO 'nova_cell0'@'%' IDENTIFIED BY 'NOVA_DBPASS';
+
+
+//Source admin credentials to gain access to admin only CLI commands
+. admin-openrc
+
+openstack user create --domain default --password-prompt nova;
+openstack role add --project service --user nova admin;
+openstack service create --name nova --description "OpenStack Compute" compute
+Configure  Compute service API endpoints:
+ 
+openstack endpoint create --region RegionOne compute public http://controller:8774/v2.1/%\(tenant_id\)s
+openstack endpoint create --region RegionOne compute internal http://controller:8774/v2.1/%\(tenant_id\)s
+openstack endpoint create --region RegionOne compute admin http://controller:8774/v2.1/%\(tenant_id\)s
+
+su -s /bin/sh -c "nova-manage api_db sync" nova
+su -s /bin/sh -c "nova-manage cell_v2 map_cell0" nova
+su -s /bin/sh -c "nova-manage db sync" nova
+su -s /bin/sh -c "nova-manage cell_v2 list_cells" nova
+su -s /bin/sh -c "nova-manage cell_v2 create_cell --name=cell1 --verbose" nova
+su -s /bin/sh -c "nova-manage db sync" nova
+su -s /bin/sh -c "nova-manage cell_v2 list_cells" nova

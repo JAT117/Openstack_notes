@@ -1,0 +1,142 @@
+MariaDB Secure Installation
+---------------------------
+SQL database for RHEL and CentOS
+
+create root password and login to offset need for su rights 
+
+systemctl disable firewalld
+do not enforce selinux
+(Or do not install it in the first place)
+
+Add the openstack yum repo and configure the manager
+
+sudo yum install centos-release-openstack-stein // in this case
+
+Add an alias to the controller named "controller"
+
+
+//Most OpenStack services use an SQL database to store information. 
+//The database typically runs on the controller node. 
+//The procedures in this guide use MariaDB or MySQL depending on the distribution. 
+//OpenStack services also support other SQL databases including PostgreSQL.
+
+Install and configure components
+Install the packages:
+
+yum install mariadb mariadb-server python2-PyMySQL -y
+
+
+//Create and edit the /etc/my.cnf.d/openstack.cnf file 
+(backup existing configuration files in /etc/my.cnf.d/ if needed) and complete the following actions:
+
+//Create a [mysqld] section, and set the bind-address key to the management IP address of the controller node to enable access by other nodes via the management network. 
+//Set additional keys to enable useful options and the UTF-8 character set:
+
+[mysqld]
+bind-address = 10.0.0.11
+default-storage-engine = innodb
+innodb_file_per_table = on
+max_connections = 4096
+collation-server = utf8_general_ci
+character-set-server = utf8
+
+//Finalize installation
+//Start the database service and configure it to start when the system boots:
+# systemctl enable mariadb.service
+# systemctl start mariadb.service
+
+==================================================================
+//Secure the database service by running the mysql_secure_installation script. 
+//In particular, choose a suitable password for the database root account:
+
+
+# mysql_secure_installation
+[root@n7 ~]# mysql_secure_installation
+
+NOTE: RUNNING ALL PARTS OF THIS SCRIPT IS RECOMMENDED FOR ALL MariaDB
+      SERVERS IN PRODUCTION USE!  PLEASE READ EACH STEP CAREFULLY!
+
+//In order to log into MariaDB to secure it, we'll need the current
+password for the root user.  
+//If you've just installed MariaDB, and
+you haven't set the root password yet, the password will be blank,
+so you should just press enter here.
+
+Enter current password for root (enter for none): 
+OK, successfully used password, moving on...
+
+Setting the root password ensures that nobody can log into the MariaDB
+root user without the proper authorisation.
+
+Set root password? [Y/n] y
+New password: 
+Re-enter new password: 
+Password updated successfully!
+Reloading privilege tables..
+ ... Success!
+
+
+By default, a MariaDB installation has an anonymous user, allowing anyone
+to log into MariaDB without having to have a user account created for
+them.  This is intended only for testing, and to make the installation
+go a bit smoother.  You should remove them before moving into a
+production environment.
+
+Remove anonymous users? [Y/n] y
+ ... Success!
+
+Normally, root should only be allowed to connect from 'localhost'.  This
+ensures that someone cannot guess at the root password from the network.
+
+Disallow root login remotely? [Y/n] n
+ ... skipping.
+
+By default, MariaDB comes with a database named 'test' that anyone can
+access.  This is also intended only for testing, and should be removed
+before moving into a production environment.
+
+Remove test database and access to it? [Y/n] n
+ ... skipping.
+
+Reloading the privilege tables will ensure that all changes made so far
+will take effect immediately.
+
+Reload privilege tables now? [Y/n] y
+ ... Success!
+
+Cleaning up...
+
+All done!  If you've completed all of the above steps, your MariaDB
+installation should now be secure.
+
+Thanks for using MariaDB!
+==================================================================
+
+
+
+CREATE DATABASE keystone;
+GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'controller' IDENTIFIED BY 'KEYSTONE_DBPASS';
+GRANT ALL PRIVILEGES ON keystone.* TO 'keystone'@'%' IDENTIFIED BY 'KEYSTONE_DBPASS';
+CREATE DATABASE glance;
+GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'controller' IDENTIFIED BY 'GLANCE_DBPASS';
+GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%' IDENTIFIED BY 'GLANCE_DBPASS';
+CREATE DATABASE placement;
+GRANT ALL PRIVILEGES ON placement.* TO 'placement'@'controller' IDENTIFIED BY 'PLACEMENT_DBPASS';
+GRANT ALL PRIVILEGES ON placement.* TO 'placement'@'%' IDENTIFIED BY 'PLACEMENT_DBPASS';
+CREATE DATABASE nova_api;
+GRANT ALL PRIVILEGES ON nova_api.* TO 'nova'@'controller' IDENTIFIED BY 'NOVA_DBPASS';
+GRANT ALL PRIVILEGES ON nova_api.* TO 'nova'@'%' IDENTIFIED BY 'NOVA_DBPASS';
+CREATE DATABASE nova;
+GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'controller' IDENTIFIED BY 'NOVA_DBPASS';
+GRANT ALL PRIVILEGES ON nova.* TO 'nova'@'%' IDENTIFIED BY 'NOVA_DBPASS';
+CREATE DATABASE nova_cell0;
+GRANT ALL PRIVILEGES ON nova_cell0.* TO 'nova_cell0'@'controller' IDENTIFIED BY 'NOVA_DBPASS';
+GRANT ALL PRIVILEGES ON nova_cell0.* TO 'nova_cell0'@'%' IDENTIFIED BY 'NOVA_DBPASS';
+CREATE DATABASE neutron;
+GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'controller' IDENTIFIED BY 'NEUTRON_DBPASS';
+GRANT ALL PRIVILEGES ON neutron.* TO 'neutron'@'%' IDENTIFIED BY 'NEUTRON_DBPASS';
+show databases;
+
+
+
+

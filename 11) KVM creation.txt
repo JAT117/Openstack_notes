@@ -1,0 +1,88 @@
+KVM creation
+------------
+
+//Check if machine can support KVM
+//IF using a VM, make sure VT-x is enabled (Intel Processors)
+yum update -y
+sudo yum install -y  qemu-kvm qemu-img libvirt virt-install libvirt-client virt-manager -y
+lsmod | grep -i KVM
+lsmod | egrep 'vm[nmw]|vbox|kvm'
+egrep --color=auto 'vmx|svm|0xc0f' /proc/cpuinfo
+virt-host-validate
+ps -ef|grep -E "kvm|qemu"
+
+sudo -i ; virsh list -all
+
+Attempt via Virtualbox and then VMware
+
+sudo wget http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img
+sudo wget http://download.cirros-cloud.net/0.3.2/cirros-0.3.2-x86_64-disk.img
+
+qemu-img info cirros-0.3.2-x86_64-disk.img # show image format (qcow2)
+
+ls /etc/libvirt/qemu/cirros.xml
+virsh edit cirros
+/var/lib/libvirt/qemu/domain-2-cirros
+
+# start libvirt
+# systemctl start libvirtd
+# systemctl enable libvirtd
+
+		or
+		
+service libvirtd start
+chkconfig libvirtd on
+
+
+# install seabios to prevent "qemu: could not load PC BIOS 'bios-256k.bin'" error
+yum install seabios-bin
+
+BREAKTHROUGH!
+https://accelazh.github.io/virtualization/Play-With-Libvirt-KVM
+
+	
+//Create and start cirros
+cirros
+cubswin:)	
+	
+//cirros4
+
+virt-install --connect=qemu:///system --name=cirros4 --nonsparse --graphics spice --ram=512 --vcpus=1 --file=/home/jt/ISO/cirros-0.4.0-x86_64-disk.img,format=qcow2 --check path_in_use=off --import --network bridge=virbr0 --os-type=linux 
+
+
+//expanded out for readability 
+
+virt-install \
+	--connect=qemu:///system \
+	--name=cirros4 -- \
+	--nonsparse \
+	--graphics spice \
+	--ram=512 \
+	--vcpus=1 \
+	--file=/home/jt/ISO/cirros-0.4.0-x86_64-disk.img,format=qcow2 \
+	--check path_in_use=off \
+	--import \
+	--network bridge=virbr0 \
+	--os-type=linux \
+
+
+//cirros3
+
+virt-install --connect=qemu:///system --name=cirros3 --nonsparse --graphics spice --ram=512 --vcpus=1 --file=/home/jt/ISO/cirros-0.3.2-x86_64-disk.img,format=qcow2 --check path_in_use=off --import --network bridge=virbr0 --os-type=linux 
+
+//expanded out for readability 
+
+virt-install \
+ --connect=qemu:///system \
+ --name=cirros3 \
+ --nonsparse \
+ --graphics spice \
+ --ram=512 \
+ --vcpus=1 \
+ --file=/home/jt/ISO/cirros-0.3.2-x86_64-disk.img,format=qcow2 \
+ --check path_in_use=off \
+ --import \
+ --network bridge=virbr0 \
+ --os-type=linux \
+ 
+I<3U

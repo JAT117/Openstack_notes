@@ -1,0 +1,131 @@
+Network Creation 
+----------------
+
+https://docs.openstack.org/python-openstackclient/stein/cli/command-objects/subnet.html
+
+openstack network create project-cloud-network  
+project-cloud-subnet
+
+openstack subnet create
+    [--project <project> [--project-domain <project-domain>]]
+    [--subnet-pool <subnet-pool> | --use-default-subnet-pool [--prefix-length <prefix-length>] | --use-prefix-delegation]
+    [--subnet-range <subnet-range>]
+    [--allocation-pool start=<ip-address>,end=<ip-address>]
+    [--dhcp | --no-dhcp]
+    [--dns-nameserver <dns-nameserver>]
+    [--gateway <gateway>]
+    [--host-route destination=<subnet>,gateway=<ip-address>]
+    [--ip-version {4,6}]
+    [--description <description>]
+    [--ipv6-ra-mode {dhcpv6-stateful,dhcpv6-stateless,slaac}]
+    [--ipv6-address-mode {dhcpv6-stateful,dhcpv6-stateless,slaac}]
+    [--network-segment <network-segment>]
+    [--service-type <service-type>]
+    [--tag <tag> | --no-tag]
+    --network <network>
+    <name>
+	
+openstack subnet create --subnet --ranage 192.168.1.0/24 --dchp --network project-cloud-network 
+
+
+openstack subnet list
+    [--long]
+    [--ip-version {4,6}]
+    [--dhcp | --no-dhcp]
+    [--project <project> [--project-domain <project-domain>]]
+    [--network <network>]
+    [--gateway <gateway>]
+    [--name <name>]
+    [--subnet-range <subnet-range>]
+    [--tags <tag>[,<tag>,...]] [--any-tags <tag>[,<tag>,...]]
+    [--not-tags <tag>[,<tag>,...]] [--not-any-tags <tag>[,<tag>,...]]
+	
+	
+	
+okokla_mme_03_CMM_OAM
+okokla_mme_03_CMM_S1
+okokla_mme_03_CMM_S11
+okokla_mme_03_CMM_S10
+okokla_mme_03_CMM_S6aSLgPri
+okokla_mme_03_CMM_S6aSLgSec
+okokla_mme_03_CMM_SLsPri
+okokla_mme_03_CMM_SLsSec
+okokla_mme_03_CMM_SBcPri
+okokla_mme_03_CMM_SBcSec
+okokla_mme_03_CMM_X1
+okokla_mme_03_CMM_X2
+CMM_om0
+CMM_om1
+
+	
+
+
+#openstack user create --project ilpeo2-mme-02 --password CMMuser123! cmmuser
+#openstack role add --project ilpeo2-mme-02 --user cmmuser admin 
+
+
+Create rc file for CMM project
+#cp overcloudrc cmmrc
+#source cmmrc
+
+#openstack network create ilpeo2_mme_02_CMM_OAM_0 --provider-network-type vlan --provider-segment 500 --provider-physical-network physnet1 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_OAM_1 --provider-network-type vlan --provider-segment 500 --provider-physical-network physnet2 --external --no-share  
+#openstack network create ilpeo2_mme_02_CMM_S1_1 --provider-network-type vlan --provider-segment 501 --provider-physical-network physnet1 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_S1_2 --provider-network-type vlan --provider-segment 501 --provider-physical-network physnet2 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_S11_1 --provider-network-type vlan --provider-segment 502 --provider-physical-network physnet1 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_S11_2 --provider-network-type vlan --provider-segment 502 --provider-physical-network physnet2 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_S10_1 --provider-network-type vlan --provider-segment 503 --provider-physical-network physnet1 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_S10_2 --provider-network-type vlan --provider-segment 503 --provider-physical-network physnet2 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_S6aSLgPri --provider-network-type vlan --provider-segment 504 --provider-physical-network physnet1 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_S6aSLgSec --provider-network-type vlan --provider-segment 505 --provider-physical-network physnet2 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_SLsPri--provider-network-type vlan --provider-segment 506 --provider-physical-network physnet1 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_SLsSec --provider-network-type vlan --provider-segment 507 --provider-physical-network physnet2 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_SBcPri --provider-network-type vlan --provider-segment 508 --provider-physical-network physnet1 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_SBcSec --provider-network-type vlan --provider-segment 509 --provider-physical-network physnet2 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_X1_1 --provider-network-type vlan --provider-segment 510 --provider-physical-network physnet1 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_X1_2 --provider-network-type vlan --provider-segment 510 --provider-physical-network physnet2 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_X2_1 --provider-network-type vlan --provider-segment 511 --provider-physical-network physnet1 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_X2_2 --provider-network-type vlan --provider-segment 511 --provider-physical-network physnet2 --external --no-share
+#openstack network create ilpeo2_mme_02_CMM_int_0 --provider-network-type vlan --provider-segment 512 --provider-physical-network physnet1 --internal --no-share
+#openstack network create ilpeo2_mme_02_CMM_int_1 --provider-network-type vlan --provider-segment 513 --provider-physical-network physnet2 --internal --no-share
+
+###subnet creation
+
+#openstack subnet create CMM_OAM_SUB --network ilpeo2_mme_02_CMM_OAM_0 --subnet-range 10.111.56.160/28 --no-dhcp
+#openstack subnet create CMM_OAM_SUB --network ilpeo2_mme_02_CMM_OAM_1 --subnet-range 10.111.56.160/28 --no-dhcp
+#openstack subnet create CMM_S1_SUB --network ilpeo2_mme_02_CMM_S1_1 --subnet-range 10.111.56.176/28 --no-dhcp
+#openstack subnet create CMM_S1_SUB --network ilpeo2_mme_02_CMM_S1_2 --subnet-range 10.111.56.176/28 --no-dhcp
+#openstack subnet create CMM_S11_SUB --network ilpeo2_mme_02_CMM_S11_1 --subnet-range 10.111.56.192/28 --no-dhcp
+#openstack subnet create CMM_S11_SUB --network ilpeo2_mme_02_CMM_S11_2 --subnet-range 10.111.56.192/28 --no-dhcp
+#openstack subnet create CMM_S10_SUB --network ilpeo2_mme_02_CMM_S10_1 --subnet-range 166.181.23.120/29 --no-dhcp
+#openstack subnet create CMM_S10_SUB --network ilpeo2_mme_02_CMM_S10_2 --subnet-range 166.181.23.120/29 --no-dhcp
+#openstack subnet create CMM_S6aSLgPri_SUB --network ilpeo2_mme_02_CMM_S6aSLgPri --subnet-range 166.181.22.224/28 --no-dhcp
+#openstack subnet create CMM_S6aSLgSec_SUB --network ilpeo2_mme_02_CMM_S6aSLgSec --subnet-range 166.181.22.240/28 --no-dhcp
+#openstack subnet create CMM_SLsPri_SUB --network ilpeo2_mme_02_CMM_SLsPri --subnet-range 166.181.24.240/29 --no-dhcp
+#openstack subnet create CMM_SLsSec_SUB --network ilpeo2_mme_02_CMM_SLsSec --subnet-range 166.181.24.248/29 --no-dhcp
+#openstack subnet create CMM_SBcPri_SUB --network ilpeo2_mme_02_CMM_SBcPri --subnet-range 10.111.56.208/29 --no-dhcp
+#openstack subnet create CMM_SBcSec_SUB --network ilpeo2_mme_02_CMM_SBcSec --subnet-range 10.111.56.216/29 --no-dhcp
+#openstack subnet create CMM_X1_SUB --network ilpeo2_mme_02_CMM_X1_1 --subnet-range 10.111.56.224/29 --no-dhcp
+#openstack subnet create CMM_X1_SUB --network ilpeo2_mme_02_CMM_X1_2 --subnet-range 10.111.56.224/29 --no-dhcp
+#openstack subnet create CMM_X2_SUB --network ilpeo2_mme_02_CMM_X2_1 --subnet-range 10.111.56.232/29 --no-dhcp 
+#openstack subnet create CMM_X2_SUB --network ilpeo2_mme_02_CMM_X2_2 --subnet-range 10.111.56.232/29 --no-dhcp
+#openstack subnet create InternalNet0_SUB --network ilpeo2_mme_02_CMM_int_0 --subnet-range 169.254.32.0/24 --no-dhcp
+#openstack subnet create InternalNet1_SUB --network ilpeo2_mme_02_CMM_int_1 --subnet-range 169.254.48.0/24 --no-dhcp 
+
+Flavor creation:
+
+#openstack flavor create CMM_NECC --ram 49152 --disk 400 --vcpus 16 --private --project ilpeo2-mme-02
+#openstack flavor set CMM_NECC --property hw:cpu_policy=dedicated
+#openstack flavor set CMM_NECC --property hw:mem_page_size=1048576
+ 
+#openstack flavor create CMM_IPDS --ram 40960 --disk 10 --vcpus 20 --private --project ilpeo2-mme-02
+#openstack flavor set CMM_IPDS --property hw:cpu_policy=dedicated  
+#openstack flavor set CMM_IPDS --property hw:mem_page_size=1048576
+
+#openstack flavor create CMM_DBS --ram 28672 --disk 10 --vcpus 8 --private --project ilpeo2-mme-02
+#openstack flavor set CMM_DBS --property hw:cpu_policy=dedicated  
+#openstack flavor set CMM_DBS --property hw:mem_page_size=1048576
+
+#openstack flavor create CMM_CPPS --ram 30720 --disk 10 --vcpus 10 --private --project ilpeo2-mme-02
+#openstack flavor set CMM_CPPS --property hw:cpu_policy=dedicated  
+#openstack flavor set CMM_CPPS --property hw:mem_page_size=1048576

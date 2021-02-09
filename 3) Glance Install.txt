@@ -1,0 +1,96 @@
+Glance 
+--------------
+https://docs.openstack.org/glance/stein/install/install-rdo.html
+https://www.server-world.info/en/note?os=CentOS_7&p=openstack_stein&f=5
+
+To create the database, complete these steps:
+Use the database access client to connect to the database server as the root user:
+
+$ mysql -u root -p
+
+CREATE DATABASE glance;
+GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'localhost' IDENTIFIED BY 'glance';
+GRANT ALL PRIVILEGES ON glance.* TO 'glance'@'%' IDENTIFIED BY 'glance';
+quit;
+
+//Source the admin credentials to gain access to admin-only CLI commands:
+#source admin-openrc
+#. admin-openrc
+
+//To create the service credentials, complete these steps:
+
+Create the glance user:
+
+# openstack user create --domain default --password-prompt glance
+
+//Add the admin role to the glance user and service project:
+
+# openstack role add --project service --user glance admin
+# openstack service create --name glance --description "OpenStack Image" image
+
+
+--- Glance endpoints
+
+# openstack user create glance --domain default --password=glance
+# openstack role add --project service --user glance admin
+# openstack service create --name glance \
+--description "OpenStack Image" image 
+
+# openstack endpoint create --region RegionOne \
+  image public http://controller01:9292
+# openstack endpoint create --region RegionOne \
+  image internal http://controller01:9292
+# openstack endpoint create --region RegionOne \
+  image admin http://controller01:9292
+
+#yum install -y openstack-glance
+
+
+//Edit the /etc/glance/glance-api.conf file and complete the following actions:
+
+In the [database] section, configure database access:
+
+[database]
+# ...
+connection = mysql+pymysql://glance:GLANCE_DBPASS@controller/glance
+Replace GLANCE_DBPASS with the password you chose for the Image service database.
+
+In the [keystone_authtoken] and [paste_deploy] sections, configure Identity service access:
+
+[keystone_authtoken]
+# ...
+www_authenticate_uri  = http://controller:5000
+auth_url = http://controller:5000
+memcached_servers = controller:11211
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+project_name = service
+username = glance
+password = password
+
+[paste_deploy]
+# ...
+flavor = keystone
+Replace GLANCE_PASS with the password you chose for the glance user in the Identity service.
+
+//Note:
+Comment out or remove any other options in the [keystone_authtoken] section.
+
+In the [glance_store] section, configure the local file system store and location of image files:
+
+[glance_store]
+# ...
+stores = file,http
+default_store = file
+filesystem_store_datadir = /var/lib/glance/images/
+Populate the Image service database:
+
+# su -s /bin/sh -c "glance-manage db_sync" glance
+ Note:Ignore any deprecation messages in this output.
+
+Finalize installation
+Start the Image services and configure them to start when the system boots:
+
+# systemctl enable openstack-glance-api.service
+# systemctl start openstack-glance-api.service
