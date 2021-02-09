@@ -1,0 +1,56 @@
+Virtualization Notes
+--------------------
+Traditionally each server is given a single OS and applications
+
+Virtualization introduces an abstraction layer between the Operating System and the hardware resources (such as the processor, storage and network).
+
+Separating the operating system from the server hardware means that multiple types and instances of Operating System with different associated applications may reside on a single server hardware platform.
+
+Virtual Machine are objest containing guest operation systems 
+and their applications which are created and managed by the hypervisors
+
+A Hypervisor or Virtual Machine Monitor (VMM)are virtual is a program that allows multiple OSs to share a single hardware host
+
+Each Virtual Machine (VM) is a guest OS
+
+Hypervisor Types:
+	Type 1: Bare metal server runs directly on the hardware: Host Server and Guest OSes
+			Consists of an optimized operatin system for virtual machines control.
+			With type 1, we can define the host server and guest OSes
+	
+	Type 2: Runs inside Host OS (KVM, QEMU, VMware, Hyper-v, Virtualbox)
+
+Common Hypervisors:
+	ESXi - Vmware
+	KVM - naive linux kernel
+	Hyper-V - Microsoft
+	Xen - Citrix 
+
+|=================
+|Virtual Machines
+|Virtual Ethernet Ports	
+|Hypervisor - Virtual Switches
+|Server Hardware
+|=================
+
+Total Cost of Ownership (TCO) is reduced 
+
+Infrastructure Orchestrators:
+Some important elements should be noted:
+-An Orchestrator always uses the services of the Hypervisor. In other words, when an Orchestrator decides to start a Virtual Machine, then it asks the Hypervisor to do so. The Orchestrator sits above the Hypervisor. The image of Brain and muscles can also be used to illustrate Orchestrator and Hypervisor.
+
+-However, an orchestrator may not be needed for a very simple virtualization environment. For low complexity applications, the use of Hypervisor may be sufficient.
+
+-In the literature related to IT Virtualization, you will find the term “Orchestrator. However, we should name this an “Infrastructure Orchestrator”, because, as we will see later, in the context of Telco Cloud, we also have an Orchestrator at a very higher level.
+
+Container Based-Virtualization, AKS OS-level Virtualization
+
+Containers are objects containing specific libs and apps, to be executed in a server-shared virtualized environment
+
+All containers share a single OS
+
+Common Container Systems:
+	Docker
+	CoreOS Rocket
+	
+

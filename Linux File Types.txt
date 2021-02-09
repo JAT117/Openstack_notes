@@ -1,0 +1,73 @@
+Linux File Types
+================
+
+Common files
+-------------
+	Regular Files(-):
+		Most common types of tile found in UNIX/Linux
+		Readable files
+		Binary files
+		Image files
+		Compressed files
+		Can be created using touch/vi or by redirection operators
+		
+		View regular files:
+			ls -l | grep ^- 
+
+	Directory files(d):
+		Contains file/folders/special files.
+		Blue in color with a link => 2
+		created using mdkir <directory name>
+		
+		View directory files:
+			ls -l | grep ^d 
+		
+Special files(This category is having 5 sub types in it.)
+----------------------------------------------------------
+	Block file(b):
+		Hardware files
+		Located in /dev
+		Create block files:
+		fdisk or create a virtual partition
+
+		View block files:
+			ls -l | grep ^b
+
+	Character device file(c):
+		Provides serial stream of input or output.
+		Allows users and programs to communicate to hardware or peripheral devices
+		Terminals are character files
+		
+		View character files:
+		cd /dev ; ls -l | grep ^c
+		
+	Named pipe file or just a pipe file(p):
+		Communicate between locak processes
+		Create using mkfifo or mknod
+		View pipe files:
+			ls -l | grep ^p
+		
+	Symbolic link file(l):
+		Linked files to other files, inode number for a file and its parent are the same. 
+		There are 2 types of link files, soft and hard links.
+		Create using ln command
+		View link files:
+			ls -l | grep ^l
+	
+	Local Domain Socket file(s):
+		Used to pass information between applications for communication
+		create using socket() system call 
+		int sockfd = socket(AF_INIT, SOCK_STREAM, 0);
+		you can use read() write() sendmsg() recvmsg() system calls on them
+		View socket files:
+			ls -l | grep ^l
+	
+	Door file(D):
+		Used in Sun Solaris as a special file for IPC between client and server
+		View door file:
+			ls -l | grep ^D
+			
+()rwxrwxrwx 2 owner group all users Date Time <name>
+
+-rw-rw-r-- 1 john students 0 Jan 17 time  
+drwxrwxrwx 2 owner group all users Date Time <Directory Name>

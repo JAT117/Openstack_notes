@@ -1,0 +1,42 @@
+Packstack AIO
+------------------------
+yum update -y
+yum install -y centos-release-openstack-stein <rocky> <queen>
+yum update -y
+yum install -y openstack-packstack
+packstack --allinone
+
+
+packstack --allinone --provision-demo=n
+Edit libvirt section in /etc/nova/nova.conf----> virt_type=kvm
+systemctl enable libvirtd openstack-nova-compute
+systemctl restart libvirtd openstack-nova-compute
+systemctl status libvirtd openstack-nova-compute
+systemctl restart libvirtd openstack-nova-compute
+
+systemctl disable NetworkManager firewalld --now
+systemctl enable network --now
+
+packstack --allinone \
+--provision-demo=n \
+--os-neutron-ovs-bridge-mappings=extnet:br-ex \
+--os-neutron-ovs-bridge-interfaces=br-ex:eth0 \
+--os-neutron-ml2-type-drivers=vxlan,flatid
+
+#edit the answer file
+packstack --gen-answer-file=answer-file
+packstack --answer-file=$youranswerfile
+
+No floating IPs are created by default. You must first create a public network and subnet, defining the IP address range for floating IPs at that time.
+
+source /root/keystonerc_admin
+neutron net-create public --router:external
+neutron subnet-create public 192.168.1.0/24 --name vlan --enable_dhcp=False --allocation_pool start=192.168.1.57,end=192.168.1.62 --gateway 192.168.1.1 (use your network gateway here - change the IP addresses in the allocation range to match what is available on your network)
+neutron router-create router1 (router1 has to be replaced by the name of your router)
+neutron router-gateway-set $router_id $vlan_id (use your router id and previous created vlan id)
+neutron floatingip-create public (repeat as necessary)
+
+
+https://www.rdoproject.org/install/packstack/
+https://www.rdoproject.org/networking/floating-ip-range/
+https://www.rdoproject.org/networking/difference-between-floating-ip-and-private-ip/

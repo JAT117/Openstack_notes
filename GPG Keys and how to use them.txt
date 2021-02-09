@@ -1,0 +1,72 @@
+Generate GPG Keys in Linux
+-------------------------
+
+Each stable RPN package in Centos has a GPG signature and keys are typically stored int /etc/pki/rpm-gpg.
+
+Looks something like this:
+pub  4096R/8483C65D 2019-05-03 CentOS (CentOS Official Signing Key) <security@centos.org>
+        Key fingerprint = 99DB 70FA E1D7 CE22 7FB6  4882 05B5 55B3 8483 C65D
+
+Install GnuGP:
+-----------
+	Debian:
+		sudo apt install gnupg
+	
+	RHEL:
+		yum install gnugp
+			or
+		dnf install gnugp
+	
+	Arch:
+		pacman -S screen
+	
+	Verify installation:
+		gpg --version
+		
+	
+Generage a GPG Key Pair:
+-----------------------
+	Warning: DO NOT FORGET PASSPHRASE
+
+	gpg --gen-key 
+	"email@domain.com"
+	create passphrase
+	make note of the uid
+	
+		or
+	gpg --full-generate-key
+	"email@domain.com"
+	create passphrase
+	make note of the uid
+	
+Revoking Keys:
+-------------
+	gpg --output revoke.asc --gen-revoke uid //will generate a revocation certificate
+	
+Exporting Public Key to a file:
+-------------------------------
+	gpg --armor --export "email@domain.com" > key.asc
+		or
+	gpg --armor --output key.txt --export "email@domain.com"
+	
+	
+Export Public Key to Keyserver:
+-------------------------------
+	gpg --fingerprint
+	gpg --keyserver pgp.mit.edu --send-key <last 8 of pub key>
+	
+	
+	
+Encrypting and Decrypting files:
+-------------------------------
+	gpg --encrypt --recipient "email@domain.com" --output encryptedfile.txt.enc originalfile.txt
+	
+	Note: To decrypt you will need to remember the passphrase from when key was generated
+	gpg --decrypt --output decrypted.txt encryptedfile.txt.enc
+	
+	read decrypted.txt to confirm decryption
+	
+https://www.liquidweb.com/kb/how-do-i-use-gpg/
+http://irtfweb.ifa.hawaii.edu/~lockhart/gpg/
+https://www.linode.com/docs/security/encryption/gpg-keys-to-send-encrypted-messages/
+https://easyengine.io/tutorials/linux/gpg-keys/

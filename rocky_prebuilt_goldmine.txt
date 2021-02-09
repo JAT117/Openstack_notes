@@ -1,0 +1,981 @@
+
+//history
+ping www.google.co.in
+openstack [shell]
+ip a
+cat /etc/sysconfig/network-scripts/ifcfg-enp0s3
+cat /etc/hosts
+
+yum install chrony
+vi /etc/chrony.conf
+systemctl enable chronyd.service --now
+systemctl start chronyd.service
+
+yum install centos-release-openstack-rocky
+yum install centos-release-openstack-<version>
+yum upgrade
+yum install python-openstackclient
+yum install openstack-selinux
+yum install mariadb mariadb-server python2-PyMySQL
+vi /etc/my.cnf.d/openstack.cnf
+systemctl enable mariadb.service --now
+systemctl start mariadb.service
+
+systemctl start mariadb.service
+vi /etc/my.cnf.d/openstack.cnf
+mysql_secure_installation
+
+yum install rabbitmq-server
+systemctl enable rabbitmq-server.service --now
+rabbitmqctl add_user openstack password
+rabbitmqctl set_permissions openstack ".*" ".*" ".*"
+
+yum install memcached python-memcached
+vi /etc/sysconfig/memcached
+systemctl enable memcached.service --now
+systemctl start memcached.service
+
+mysql -u root -p
+yum install openstack-keystone httpd mod_wsgi
+vi /etc/keystone/keystone.conf
+su -s /bin/sh -c "keystone-manage db_sync" keystone
+keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+
+keystone-manage bootstrap --bootstrap-password password   --bootstrap-admin-url http://controller:5000/v3/   --bootstrap-internal-url http://controller:5000/v3/   --bootstrap-public-url http://controller:5000/v3/   --bootstrap-region-id RegionOne
+
+vi /etc/httpd/conf/httpd.conf
+hostname
+cat /etc/hosts
+ln -s /usr/share/keystone/wsgi-keystone.conf /etc/httpd/conf.d/
+systemctl enable httpd.service --now
+systemctl start httpd.service
+
+
+***admin-openrc***
+export OS_USERNAME=admin
+export OS_PASSWORD=password
+export OS_PROJECT_NAME=admin
+export OS_USER_DOMAIN_NAME=Default
+export OS_PROJECT_DOMAIN_NAME=Default
+export OS_AUTH_URL=http://controller:5000/v3
+export OS_IDENTITY_API_VERSION=3
+******************
+
+
+openstack user list
+openstack project list
+openstack role list
+openstack service list
+openstack endpoint list
+openstack catalog list
+openstack domain create --description "An Example Domain" example
+openstack domain list
+openstack project create --domain default --description "Service Project" service
+openstack project list
+openstack project create --domain default --description "Demo Project" myproject
+openstack project list
+openstack user create --domain default --password-prompt myuser
+openstack user list
+openstack role create myrole
+openstack role list
+openstack role add --project myproject --user myuser myrole
+unset OS_AUTH_URL OS_PASSWORD
+openstack role list
+openstack --os-auth-url http://controller:5000/v3   \
+--os-project-domain-name Default \
+--os-user-domain-name Default   \
+--os-project-name admin \
+--os-username admin token issue
+
+vi admin-openrc
+vi demo-openrc
+. admin-openrc
+openstack user list
+openstack token issue
+mysql -u root -p
+
+. admin-openrc
+openstack user create --domain default --password-prompt glance
+openstack user list
+openstack role add --project service --user glance admin
+openstack service create --name glance   --description "OpenStack Image" image
+openstack catalog list
+openstack endpoint create --region RegionOne image public http://controller:9292
+openstack endpoint create --region RegionOne image internal http://controller:9292
+openstack endpoint create --region RegionOne image admin http://controller:9292
+
+openstack catalog list
+yum install openstack-glance
+vi /etc/glance/glance-api.conf
+vi /etc/glance/glance-registry.conf
+su -s /bin/sh -c "glance-manage db_sync" glance
+systemctl enable openstack-glance-api.service openstack-glance-registry.service
+systemctl start openstack-glance-api.service openstack-glance-registry.service
+
+. admin-openrc
+yum install wget
+wget http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img
+
+openstack image create "cirros"  \
+--file cirros-0.4.0-x86_64-disk.img   \
+--disk-format qcow2 \
+--container-format bare  \
+--public
+
+openstack image list
+. admin-openrc
+openstack user list
+openstack project list
+openstack catalog list
+openstack image list
+
+mysql -u root -p
+
+. admin-openrc
+openstack user create --domain default --password-prompt nova
+openstack role add --project service --user nova admin
+openstack service create --name nova   --description "OpenStack Compute" compute
+openstack endpoint create --region RegionOne   compute public http://controller:8774/v2.1
+openstack endpoint create --region RegionOne   compute internal http://controller:8774/v2.1
+openstack endpoint create --region RegionOne   compute admin http://controller:8774/v2.1
+
+openstack user create --domain default --password-prompt placement
+openstack role add --project service --user placement admin
+openstack service create --name placement   --description "Placement API" placement
+openstack endpoint create --region RegionOne   placement public http://controller:8778
+openstack endpoint create --region RegionOne   placement internal http://controller:8778
+openstack endpoint create --region RegionOne   placement admin http://controller:8778
+openstack user list
+
+openstack catalog list
+yum install openstack-nova-api openstack-nova-conductor openstack-nova-console openstack-nova-novncproxy openstack-nova-scheduler openstack-nova-placement-api
+vi /etc/nova/nova.conf
+vi /etc/httpd/conf.d/00-nova-placement-api.conf
+systemctl restart httpd
+su -s /bin/sh -c "nova-manage api_db sync" nova
+su -s /bin/sh -c "nova-manage cell_v2 map_cell0" nova
+su -s /bin/sh -c "nova-manage cell_v2 create_cell --name=cell1 --verbose" nova
+su -s /bin/sh -c "nova-manage db sync" nova
+su -s /bin/sh -c "nova-manage cell_v2 list_cells" nova
+systemctl enable openstack-nova-api.service   openstack-nova-consoleauth openstack-nova-scheduler.service   openstack-nova-conductor.service openstack-nova-novncproxy.service
+systemctl start openstack-nova-api.service   openstack-nova-consoleauth openstack-nova-scheduler.service   openstack-nova-conductor.service openstack-nova-novncproxy.service
+
+yum install openstack-nova-compute
+vi /etc/nova/nova.conf
+cat /etc/hosts
+egrep -c '(vmx|svm)' /proc/cpuinfo
+vi /etc/nova/nova.conf
+systemctl enable libvirtd.service openstack-nova-compute.service
+systemctl start libvirtd.service openstack-nova-compute.service
+
+. admin-openrc
+openstack compute service list --service nova-compute
+su -s /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" nova
+openstack compute service list
+openstack catalog list
+
+mysql -u root -p
+. admin-openrc
+openstack user create --domain default --password-prompt neutron
+openstack role add --project service --user neutron admin
+openstack service create --name neutron   --description "OpenStack Networking" network
+openstack catalog list
+openstack endpoint create --region RegionOne   network public http://controller:9696
+openstack endpoint create --region RegionOne   network internal http://controller:9696
+openstack endpoint create --region RegionOne   network admin http://controller:9696
+yum install openstack-neutron openstack-neutron-ml2   openstack-neutron-linuxbridge ebtables
+vi /etc/neutron/neutron.conf
+vi /etc/neutron/plugins/ml2/ml2_conf.ini
+vi /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+vi /etc/neutron/l3_agent.ini
+vi /etc/neutron/dhcp_agent.ini
+vi /etc/neutron/metadata_agent.ini
+vi /etc/nova/nova.conf
+ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini
+su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
+--config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron
+systemctl restart openstack-nova-api.service
+systemctl enable neutron-server.service   neutron-linuxbridge-agent.service neutron-dhcp-agent.service   neutron-metadata-agent.service
+systemctl start neutron-server.service   neutron-linuxbridge-agent.service neutron-dhcp-agent.service   neutron-metadata-agent.service
+systemctl enable neutron-l3-agent.service
+systemctl start neutron-l3-agent.service
+yum install openstack-neutron-linuxbridge ebtables ipset
+systemctl restart openstack-nova-compute.service
+systemctl enable neutron-linuxbridge-agent.service
+systemctl start neutron-linuxbridge-agent.service
+openstack network agent list
+yum install openstack-utils
+openstack-status
+yum install openstack-dashboard
+vi /etc/openstack-dashboard/local_settings
+vi /etc/httpd/conf.d/openstack-dashboard.conf
+systemctl restart httpd.service memcached.service
+systemctl status firewalld
+systemctl stop firewalld
+systemctl disable firewalld
+whoami
+yum list installed | less
+arp -a
+ll
+. admin-openrc
+env | grep -i OS
+mysql -u root -p
+mysql -u keystone -p password -h controller
+vi /etc/keystone/keystone.conf
+cat /etc/keystone/keystone.conf
+cat /etc/keystone/keystone.conf | grep -i keystone
+cat /etc/keystone/keystone.conf | grep -i mysql
+ping controller
+cat /etc/hosts
+
+  201  20/11/19 16:58:54 vi /etc/hosts
+  202  20/11/19 16:58:54 ping controller
+  203  20/11/19 16:58:54 ip controller
+  204  20/11/19 16:58:54 ip ea
+  205  20/11/19 16:58:54 ip a
+  206  20/11/19 16:58:54 vi /etc/hosts
+  207  20/11/19 16:58:54 ping controller
+  208  20/11/19 16:58:54 mysql -u keystone -p passwprd -h controller
+  209  20/11/19 16:58:54 mysql -u keystone -p password -h controller
+  210  20/11/19 16:58:54 mysql -u keystone -h controller -p
+  211  20/11/19 16:58:54 ip a
+  212  20/11/19 16:58:54 cd /etc/my.cfn.d/openstack.cnf
+  213  20/11/19 16:58:54 cd /etc/my.cnf.d/openstack.cnf
+  214  20/11/19 16:58:54 vi /etc/my.cnf.d/openstack.cnf
+  215  20/11/19 16:58:54 systemctl restart mariadb.service
+  216  20/11/19 16:58:54 mysql -u keystone -h controller -p
+  217  20/11/19 16:58:54 cd ~/
+  218  20/11/19 16:58:54 source admin-openrc
+  219  20/11/19 16:58:54 . admin-openrc
+  220  20/11/19 16:58:54 opesntack catalog list
+  221  20/11/19 16:58:54 openstack catalog list
+  222  20/11/19 16:58:54 openstack user list
+  223  20/11/19 16:58:54 systemctl status rabbitmq-server
+  224  20/11/19 16:58:54 ll
+  225  20/11/19 16:58:54 openstack catalog list
+  226  20/11/19 16:58:54 openstack user list
+  227  20/11/19 16:58:54 systemctl status | grep openstack*
+  228  20/11/19 16:58:54 systemctl status | grep openstack
+  229  20/11/19 16:58:54 systemctl status openstack* |grep running
+  230  20/11/19 16:58:54 uptime
+  231  20/11/19 16:58:54 openstack service list
+  232  20/11/19 16:58:54 openstack server list
+  233  20/11/19 16:58:54 openstack image list
+  234  20/11/19 16:58:54 who
+  235  20/11/19 16:58:54 top
+  236  20/11/19 16:58:54 who
+  237  20/11/19 16:58:54 reboot
+  238  20/11/19 16:58:54 ip a
+  239  20/11/19 16:58:54 ping
+  240  20/11/19 16:58:54 cd /etc/openstack-dashboard/
+  241  20/11/19 16:58:54 ll
+  242  20/11/19 16:58:54 cat local_settings | grep -i dashboard
+  243  20/11/19 16:58:54 systemctl status firewalld
+  244  20/11/19 16:58:54 systemctl restart httpd.service
+  245  20/11/19 16:58:54 netstat -nltpu
+  246  20/11/19 16:58:54 openstack catalog list
+  247  20/11/19 16:58:54 ls
+  248  20/11/19 16:58:54 ls -la ~/
+  249  20/11/19 16:58:54 tail -f /var/log/httpd/httpd.log
+  250  20/11/19 16:58:54 cd /var/log/httpd ; ls
+  251  20/11/19 16:58:54 ls -lrt
+  252  20/11/19 16:58:54 tail -f error_log
+  253  20/11/19 16:58:54 cd /etc/httpd
+  254  20/11/19 16:58:54 ll
+  255  20/11/19 16:58:54 cd conf
+  256  20/11/19 16:58:54 ll
+  257  20/11/19 16:58:54 nano httpd.conf
+  258  20/11/19 16:58:54 vi httpd.conf
+  259  20/11/19 16:58:54 ll
+  260  20/11/19 16:58:54 cd ../conf.d
+  261  20/11/19 16:58:54 ll
+  262  20/11/19 16:58:54 vi ../conf/httpd.conf
+  263  20/11/19 16:58:54 cd /etc/httpd/
+  264  20/11/19 16:58:54 ll
+  265  20/11/19 16:58:54 cd /etc/openstack-dashboard/local_settings
+  266  20/11/19 16:58:54 vi /etc/openstack-dashboard/local_settings
+  267  20/11/19 16:58:54 systemctl restart httpd.service
+  268  20/11/19 16:58:54 cd ~/
+  269  20/11/19 16:58:54 cat admin-openrc
+  270  20/11/19 16:58:54 . admin-openrc
+  271  20/11/19 16:58:54 openstack user lsit
+  272  20/11/19 16:58:54 openstack user list
+  273  20/11/19 16:58:54 openstack catalog list
+  274  20/11/19 16:58:54 tail -f /var/logs/keystone/keystone.log
+  275  20/11/19 16:58:54 cd /var/log/keystone/
+  276  20/11/19 16:58:54 ll
+  277  20/11/19 16:58:54 tail -f keystone.log
+  278  20/11/19 16:58:54 netstat -tulpn
+  279  20/11/19 16:58:54 tail -f keystone.log
+  280  20/11/19 16:58:54 cd ~/
+  281  20/11/19 16:58:54 ll
+  283  20/11/19 16:58:54 env | grep -i OS
+  284  20/11/19 16:58:54 openstack catalog list
+  285  20/11/19 16:58:54 cd /etc/keystone/
+  286  20/11/19 16:58:54 ll
+  287  20/11/19 16:58:54 vi keystone.conf
+  288  20/11/19 16:58:54 yum repolist
+  289  20/11/19 16:58:54 ps aux | grep openstack
+  290  20/11/19 16:58:54 ps aux | grep openstack*
+  291  20/11/19 16:58:54 who
+  292  20/11/19 16:58:54 openstack flavor list
+  293  20/11/19 16:58:54 ip a
+  294  20/11/19 16:58:54 cat /etc/hosts
+  295  20/11/19 16:58:54 ip link show
+  296  20/11/19 16:58:54 ip r
+  297  20/11/19 16:58:54 ip a
+  298  20/11/19 16:58:54 openstack --version
+  299  20/11/19 16:58:54 systemctl status | grep openstack-*
+  300  20/11/19 16:58:54 systemctl status rabbitmq-server
+  301  20/11/19 16:58:54 cd /etc/rabbitmq/
+  302  20/11/19 16:58:54 ll
+  303  20/11/19 16:58:54 cat.config
+  304  20/11/19 16:58:54 ./root/admin-openrc
+  305  20/11/19 16:58:54 . admin-openrc
+  306  20/11/19 16:58:54 cd /root/
+  307  20/11/19 16:58:54 . admin-openrc
+  308  20/11/19 16:58:54 cat /etc/rabbitmq/
+  309  20/11/19 16:58:54 ll
+  310  20/11/19 16:58:54 ls -lrta /etc/rabbitmq/
+  311  20/11/19 16:58:54 cat /etc/rabbitmq/rabbitmq.config
+  312  20/11/19 16:58:54 who
+  313  20/11/19 16:58:54 watch netstat -tupln | grep openstack
+  314  20/11/19 16:58:54 watch netstat -tupln
+  315  20/11/19 16:58:54 ip link show
+  316  20/11/19 16:58:54 who
+  317  20/11/19 16:58:54 systemctl status firewalld
+  318  20/11/19 16:58:54 sestatus
+  319  20/11/19 16:58:54 cat /etc/selinux/semanage.conf
+  320  20/11/19 16:58:54 w
+  321  20/11/19 16:58:54 who --ips
+  322  20/11/19 16:58:54 lsb_release -a
+  323  20/11/19 16:58:54 /sbin/init --version
+  324  20/11/19 16:58:54 systemctl --version
+  325  20/11/19 16:58:54 dnf --version
+  326  20/11/19 16:58:54 yum --version
+  327  20/11/19 16:58:54 python3 --version
+  328  20/11/19 16:58:54 yum repolist
+  329  20/11/19 16:58:54 cd /etc/yum.repos.d/
+  330  20/11/19 16:58:54 ll
+  331  20/11/19 16:58:54 yum install nano
+  332  20/11/19 16:58:54 nano --version
+  333  20/11/19 16:58:54 ll
+  334  20/11/19 16:58:54 nano CentOS-OpenStack-rocky.repo
+  335  20/11/19 16:58:54 ll
+  336  20/11/19 16:58:54 yum repolist
+  337  20/11/19 16:58:54 ll /etc/pki/rpm
+  338  20/11/19 16:58:54 ll /etc/pki/rpm-gpg/
+  339  20/11/19 16:58:54 cat /etc/pki/rpm-gpg/*
+  340  20/11/19 16:58:54 ll
+  341  20/11/19 16:58:54 cd ~
+  342  20/11/19 16:58:54 ll
+  343  20/11/19 16:58:54 ls -lrt
+  344  20/11/19 16:58:54 ls -la
+  345  20/11/19 16:58:54 cat .bash_profile
+  346  20/11/19 16:58:54 echo `export HISTTIMEFORMAT=%d/%m/%y %T"` >>~/.bash_profile
+  347  20/11/19 16:58:54 echo 'export HISTTIMEFORMAT=%d/%m/%y %T"' >>~/.bash_profile
+  348  20/11/19 16:58:54 cat .bash_profile
+  349  20/11/19 16:58:54 echo 'export HISTTIMEFORMAT="%d/%m/%y %T"' >>~/.bash_profile
+  350  20/11/19 16:58:54 cat .bash_profile
+  351  20/11/19 16:58:54 nano .bash_profile
+  352  20/11/19 16:58:54 cd /root
+  353  20/11/19 16:58:54 source .bash_profile
+  354  19/11/19 18:35:10 history
+  355  19/11/19 18:36:23 echo 'export HISTTIMEFORMAT="%d/%m/%y %T "' >>~/.bash_profile
+  356  19/11/19 18:36:29 nano .bash_profile
+  357  19/11/19 18:36:58 source .bash_profile
+  358  19/11/19 20:39:33 whoami
+  359  19/11/19 20:39:36 who am i
+  360  19/11/19 20:41:50 cat /etc/glance/glance-api.conf
+  361  19/11/19 20:42:10 cat /etc/glance/glance-api.conf | egrep -v "^#|^$"
+  362  19/11/19 20:45:54 cd /etc/glance/glance-registry.conf
+  363  19/11/19 20:46:06 man cd
+  364  19/11/19 21:00:23 cat /etc/my.cnf.d/openstack.cnf
+  365  19/11/19 21:00:53 ll
+  366  19/11/19 21:01:03 cat *-openrc
+  367  19/11/19 21:01:19 cat ll *-openrc
+  368  19/11/19 21:01:38 cat *
+  369  19/11/19 21:01:58 top
+  370  19/11/19 21:02:06 yum install htop
+  371  19/11/19 21:02:18 htop
+  372  19/11/19 21:02:21 yum install htop
+  373  19/11/19 21:02:30 yum repolist
+  374  19/11/19 21:03:32 grep ^/dev/null *
+  375  19/11/19 21:03:45 grep ^ /dev/null *
+  376  19/11/19 21:03:53 ll
+  377  19/11/19 21:11:25 nano hello_world.c
+  378  19/11/19 21:12:42 gcc +version
+  379  19/11/19 21:12:46 gcc --version
+  380  19/11/19 21:13:01 yum install gcc+
+  381  19/11/19 21:13:07 yum install gcc
+  382  19/11/19 21:14:00 ip up
+  383  19/11/19 21:14:05 ip a
+  384  19/11/19 21:14:16 ip n
+  385  19/11/19 21:14:20 ip a
+  386  19/11/19 21:14:25 man ip
+  387  19/11/19 21:19:45 cp admin-openrc jt_openrc
+  388  19/11/19 21:19:51 nano jt_openrc
+  389  19/11/19 21:20:49 source jt_openrc
+  390  19/11/19 21:20:57 . jt_openrc
+  391  19/11/19 21:21:08 env | grep -i OS
+  392  19/11/19 21:30:08 openstack
+  393  19/11/19 21:30:32 openstack server
+  394  19/11/19 21:30:40 openstack catalog list
+  395  19/11/19 21:30:41 openstack service list
+  396  19/11/19 21:30:42 openstack domain list
+  397  19/11/19 21:30:43 openstack project list
+  398  19/11/19 21:30:44 openstack user list
+  399  19/11/19 21:30:45 openstack hypervisor list
+  400  19/11/19 21:30:46 openstack image list
+  401  19/11/19 21:30:47 openstack flavor list
+  402  19/11/19 21:30:48 openstack volume list
+  
+  404  19/11/19 21:30:55 openstack-status
+
+
+  407  20/11/19 17:00:03 systemctl list-units --type service --state running,failed
+
+
+
+==================================================================
+==================================================================
+==================================================================
+[{Last login: Wed Nov 20 16:51:28 2019
+# systemctl list-units --type=service status=running,failed
+0 loaded units listed. Pass --all to see loaded but inactive units, too.
+To show all installed unit files use 'systemctl list-unit-files'.
+# systemctl list-units --type=service --status=running,failed
+systemctl: unrecognized option '--status=running,failed'
+# systemctl list-units --type=service --status running,failed
+systemctl: unrecognized option '--status'
+# systemctl list-units --type=service --status=failed
+systemctl: unrecognized option '--status=failed'
+# systemctl list-units --type=service --status=running
+systemctl: unrecognized option '--status=running'
+# uname -a
+Linux controller 3.10.0-957.5.1.el7.x86_64 #1 SMP Fri Feb 1 14:54:57 UTC 2019 x86_64 x86_64 x86_64 GNU/Linux
+# who am i
+root     pts/0        2019-11-20 16:58 (192.168.2.1)
+# systemctl list-units --type=service --status=running
+systemctl: unrecognized option '--status=running'
+# systemctl list-units --type service --state running,failed
+  UNIT                               LOAD   ACTIVE SUB     DESCRIPTION
+  auditd.service                     loaded active running Security Auditing Service
+  chronyd.service                    loaded active running NTP client/server
+  crond.service                      loaded active running Command Scheduler
+  dbus.service                       loaded active running D-Bus System Message Bus
+  dm-event.service                   loaded active running Device-mapper event daemon
+  epmd@0.0.0.0.service               loaded active running Erlang Port Mapper Daemon
+  getty@tty1.service                 loaded active running Getty on tty1
+  gssproxy.service                   loaded active running GSSAPI Proxy Daemon
+  httpd.service                      loaded active running The Apache HTTP Server
+  irqbalance.service                 loaded active running irqbalance daemon
+  ksmtuned.service                   loaded active running Kernel Samepage Merging (KSM) Tuning Daemon
+  libvirtd.service                   loaded active running Virtualization daemon
+  lvm2-lvmetad.service               loaded active running LVM2 metadata daemon
+  mariadb.service                    loaded active running MariaDB 10.1 database server
+  memcached.service                  loaded active running memcached daemon
+● network.service                    loaded failed failed  LSB: Bring up/down networking
+  NetworkManager.service             loaded active running Network Manager
+  neutron-dhcp-agent.service         loaded active running OpenStack Neutron DHCP Agent
+  neutron-l3-agent.service           loaded active running OpenStack Neutron Layer 3 Agent
+  neutron-linuxbridge-agent.service  loaded active running OpenStack Neutron Linux Bridge Agent
+  neutron-metadata-agent.service     loaded active running OpenStack Neutron Metadata Agent
+  neutron-server.service             loaded active running OpenStack Neutron Server
+  openstack-cinder-api.service       loaded active running OpenStack Cinder API Server
+  openstack-cinder-scheduler.service loaded active running OpenStack Cinder Scheduler Server
+  openstack-cinder-volume.service    loaded active running OpenStack Cinder Volume Server
+  openstack-glance-api.service       loaded active running OpenStack Image Service (code-named Glance) API server
+  openstack-glance-registry.service  loaded active running OpenStack Image Service (code-named Glance) Registry server
+  openstack-nova-api.service         loaded active running OpenStack Nova API Server
+  openstack-nova-compute.service     loaded active running OpenStack Nova Compute Server
+  openstack-nova-conductor.service   loaded active running OpenStack Nova Conductor Server
+  openstack-nova-consoleauth.service loaded active running OpenStack Nova VNC console auth Server
+  openstack-nova-novncproxy.service  loaded active running OpenStack Nova NoVNC Proxy Server
+  openstack-nova-scheduler.service   loaded active running OpenStack Nova Scheduler Server
+  polkit.service                     loaded active running Authorization Manager
+  postfix.service                    loaded active running Postfix Mail Transport Agent
+  rabbitmq-server.service            loaded active running RabbitMQ broker
+  rpcbind.service                    loaded active running RPC bind service
+  rsyslog.service                    loaded active running System Logging Service
+  sshd.service                       loaded active running OpenSSH server daemon
+  systemd-journald.service           loaded active running Journal Service
+  systemd-logind.service             loaded active running Login Service
+  systemd-machined.service           loaded active running Virtual Machine and Container Registration Service
+  systemd-udevd.service              loaded active running udev Kernel Device Manager
+  tuned.service                      loaded active running Dynamic System Tuning Daemon
+
+LOAD   = Reflects whether the unit definition was properly loaded.
+ACTIVE = The high-level unit activation state, i.e. generalization of SUB.
+SUB    = The low-level unit activation state, values depend on unit type.
+
+44 loaded units listed. Pass --all to see loaded but inactive units, too.
+To show all installed unit files use 'systemctl list-unit-files'.
+# systemctl status rabbitmq-server
+● rabbitmq-server.service - RabbitMQ broker
+   Loaded: loaded (/usr/lib/systemd/system/rabbitmq-server.service; enabled; vendor preset: disabled)
+   Active: active (running) since Wed 2019-11-20 16:52:34 IST; 10min ago
+ Main PID: 6766 (beam.smp)
+   Status: "Initialized"
+    Tasks: 143
+   CGroup: /system.slice/rabbitmq-server.service
+           ├─6766 /usr/lib64/erlang/erts-8.3.5.3/bin/beam.smp -W w -A 128 -P 1048576 -t 5000000 -stbt db -K true -- -root /usr/lib64/erlang -progname erl ...
+           ├─7843 erl_child_setup 1024
+           ├─8109 inet_gethost 4
+           └─8110 inet_gethost 4
+
+Nov 20 16:51:08 controller systemd[1]: Starting RabbitMQ broker...
+Nov 20 16:52:28 controller rabbitmq-server[6766]: RabbitMQ 3.6.5. Copyright (C) 2007-2016 Pivotal Software, Inc.
+Nov 20 16:52:28 controller rabbitmq-server[6766]: ##  ##      Licensed under the MPL.  See http://www.rabbitmq.com/
+Nov 20 16:52:28 controller rabbitmq-server[6766]: ##  ##
+Nov 20 16:52:28 controller rabbitmq-server[6766]: ##########  Logs: /var/log/rabbitmq/rabbit@controller.log
+Nov 20 16:52:28 controller rabbitmq-server[6766]: ######  ##        /var/log/rabbitmq/rabbit@controller-sasl.log
+Nov 20 16:52:28 controller rabbitmq-server[6766]: ##########
+Nov 20 16:52:28 controller rabbitmq-server[6766]: Starting broker...
+Nov 20 16:52:34 controller systemd[1]: Started RabbitMQ broker.
+Nov 20 16:52:34 controller rabbitmq-server[6766]: completed with 0 plugins.
+# tail -f /var/log/rabbitmq/rabbit\@controller.log
+accepting AMQP connection <0.1160.0> (192.168.2.141:42528 -> 192.168.2.141:5672)
+
+=INFO REPORT==== 20-Nov-2019::16:53:08 ===
+Connection <0.1160.0> (192.168.2.141:42528 -> 192.168.2.141:5672) has a client-provided name: nova-conductor:7945:b8ef110e-bfd7-48fe-9f02-c422836c9fbe
+
+=INFO REPORT==== 20-Nov-2019::16:53:08 ===
+accepting AMQP connection <0.1171.0> (192.168.2.141:42538 -> 192.168.2.141:5672)
+
+=INFO REPORT==== 20-Nov-2019::16:53:08 ===
+Connection <0.1171.0> (192.168.2.141:42538 -> 192.168.2.141:5672) has a client-provided name: nova-compute:7196:3cb46daf-b49d-44c2-b9ca-f7d71cca6e65
+
+# ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: ens33: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 00:0c:29:4b:9a:bb brd ff:ff:ff:ff:ff:ff
+    inet 192.168.2.141/24 brd 192.168.2.255 scope global noprefixroute dynamic ens33
+       valid_lft 1541sec preferred_lft 1541sec
+    inet6 fe80::cd37:5f23:57ce:78ce/64 scope link noprefixroute
+       valid_lft forever preferred_lft forever
+3: ens34: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 00:0c:29:4b:9a:c5 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.161.140/24 brd 192.168.161.255 scope global noprefixroute dynamic ens34
+       valid_lft 1613sec preferred_lft 1613sec
+    inet6 fe80::40cd:838b:3995:16fa/64 scope link noprefixroute
+       valid_lft forever preferred_lft forever
+4: ens35: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 00:0c:29:4b:9a:cf brd ff:ff:ff:ff:ff:ff
+    inet 192.168.2.142/24 brd 192.168.2.255 scope global noprefixroute dynamic ens35
+       valid_lft 1692sec preferred_lft 1692sec
+    inet6 fe80::42bd:bda1:b49e:ac54/64 scope link noprefixroute
+       valid_lft forever preferred_lft forever
+	   
+# tail -f /var/log/keystone/keystone.log
+2019-11-19 21:30:51.910 8916 INFO keystone.common.wsgi [req-0ecfccfc-40ad-4360-938a-3275d923ae0d - - - - -] POST http://controller:5000/v3/auth/tokens
+2019-11-19 21:30:51.938 8916 WARNING keystone.auth.core [req-0ecfccfc-40ad-4360-938a-3275d923ae0d - - - - -] Could not find domain: Cloud9.: DomainNotFound: Could not find domain: Cloud9.
+2019-11-19 21:30:51.938 8916 WARNING keystone.common.wsgi [req-0ecfccfc-40ad-4360-938a-3275d923ae0d - - - - -] Authorization failed. The request you have made requires authentication. from 192.168.2.141: Unauthorized: The request you e made requires authentication.
+2019-11-19 21:31:31.772 8918 INFO keystone.common.wsgi [req-0153568b-034c-4824-ae40-69de616d2a10 c551ce245e734067be716ae98cced204 a6d47a8f0dce413fa7f2cdd4dd96c953 - default default] GET http://controller:5000/v3/auth/tokens
+2019-11-20 16:55:05.383 8898 INFO keystone.common.wsgi [req-f7eb1067-e964-438f-81b0-f0e48b852251 - - - - -] POST http://controller:5000/v3/auth/tokens
+2019-11-20 16:55:14.959 8898 INFO keystone.common.wsgi [req-106f51da-3320-4569-90bb-7fbb5be93a2a - - - - -] POST http://controller:5000/v3/auth/tokens
+2019-11-20 16:55:26.575 8897 INFO keystone.common.wsgi [req-55ca1596-914e-43fb-a0c0-178e40832c75 c551ce245e734067be716ae98cced204 a6d47a8f0dce413fa7f2cdd4dd96c953 - default default] GET http://controller:5000/v3/auth/tokens
+2019-11-20 17:01:12.671 8899 INFO keystone.common.wsgi [req-f4232a3b-e22a-405d-9616-6ceeee56922e - - - - -] POST http://controller:5000/v3/auth/tokens
+2019-11-20 17:01:14.318 8898 INFO keystone.common.wsgi [req-4bd3ba5c-6afa-4758-9bb5-61aa1b9c87b4 c551ce245e734067be716ae98cced204 a6d47a8f0dce413fa7f2cdd4dd96c953 - default default] GET http://controller:5000/v3/auth/tokens
+2019-11-20 17:07:14.731 8900 INFO keystone.common.wsgi [req-6b7c1b13-cb10-4e82-b383-e0d46696ae77 c551ce245e734067be716ae98cced204 a6d47a8f0dce413fa7f2cdd4dd96c953 - default default] GET http://controller:5000/v3/auth/tokens
+2019-11-20 17:12:21.119 8897 INFO keystone.common.wsgi [req-609ba28f-473d-47d4-aa9a-8a480e538345 c551ce245e734067be716ae98cced204 a6d47a8f0dce413fa7f2cdd4dd96c953 - default                                                              default] GET http://controller:5000/v3/auth/tokens
+
+# systemctl status httpd.service
+● httpd.service - The Apache HTTP Server
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)
+  Drop-In: /usr/lib/systemd/system/httpd.service.d
+           └─openstack-dashboard.conf
+   Active: active (running) since Wed 2019-11-20 16:54:01 IST; 19min ago
+     Docs: man:httpd(8)
+           man:apachectl(8)
+  Process: 8067 ExecStartPre=/usr/bin/python /usr/share/openstack-dashboard/manage.py compress --force -v0 (code=exited, status=0/SUCCESS)
+  Process: 6813 ExecStartPre=/usr/bin/python /usr/share/openstack-dashboard/manage.py collectstatic --noinput --clear -v0 (code=exited, status=0/SUCCESS)
+ Main PID: 8891 (httpd)
+   Status: "Total requests: 123; Current requests/sec: 0; Current traffic:   0 B/sec"
+    Tasks: 59
+   CGroup: /system.slice/httpd.service
+           ├─8891 /usr/sbin/httpd -DFOREGROUND
+           ├─8892 /usr/sbin/httpd -DFOREGROUND
+           ├─8893 /usr/sbin/httpd -DFOREGROUND
+           ├─8894 /usr/sbin/httpd -DFOREGROUND
+           ├─8895 /usr/sbin/httpd -DFOREGROUND
+           ├─8896 (wsgi:keystone- -DFOREGROUND
+           ├─8897 (wsgi:keystone- -DFOREGROUND
+           ├─8898 (wsgi:keystone- -DFOREGROUND
+           ├─8899 (wsgi:keystone- -DFOREGROUND
+           ├─8900 (wsgi:keystone- -DFOREGROUND
+           ├─8901 /usr/sbin/httpd -DFOREGROUND
+           ├─8902 /usr/sbin/httpd -DFOREGROUND
+           ├─8903 /usr/sbin/httpd -DFOREGROUND
+           ├─8904 /usr/sbin/httpd -DFOREGROUND
+           ├─8905 /usr/sbin/httpd -DFOREGROUND
+           ├─9407 /usr/sbin/httpd -DFOREGROUND
+           ├─9461 /usr/sbin/httpd -DFOREGROUND
+           └─9493 /usr/sbin/httpd -DFOREGROUND
+
+Nov 20 16:51:08 controller systemd[1]: Starting The Apache HTTP Server...
+Nov 20 16:54:01 controller python[8067]: Compressing... done
+Nov 20 16:54:01 controller python[8067]: Compressed 7 block(s) from 4 template(s) for 2 context(s).
+Nov 20 16:54:01 controller systemd[1]: Started The Apache HTTP Server.
+
+# yum list installed | grep python-openstackclient
+python-openstackclient-lang.noarch   3.16.2-1.el7        @centos-openstack-rocky
+
+# cat /usr/share/keystone/wsgi-keystone.conf
+Listen 5000
+
+<VirtualHost *:5000>
+    WSGIDaemonProcess keystone-public processes=5 threads=1 user=keystone group=keystone display-name=%{GROUP}
+    WSGIProcessGroup keystone-public
+    WSGIScriptAlias / /usr/bin/keystone-wsgi-public
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+    LimitRequestBody 114688
+    <IfVersion >= 2.4>
+      ErrorLogFormat "%{cu}t %M"
+    </IfVersion>
+    ErrorLog /var/log/httpd/keystone.log
+    CustomLog /var/log/httpd/keystone_access.log combined
+
+    <Directory /usr/bin>
+        <IfVersion >= 2.4>
+            Require all granted
+        </IfVersion>
+        <IfVersion < 2.4>
+            Order allow,deny
+            Allow from all
+        </IfVersion>
+    </Directory>
+</VirtualHost>
+
+Alias /identity /usr/bin/keystone-wsgi-public
+<Location /identity>
+    SetHandler wsgi-script
+    Options +ExecCGI
+
+    WSGIProcessGroup keystone-public
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+</Location>
+
+# ps -ef | grep keystone
+keystone  8896  8891  0 16:54 ?        00:00:04 (wsgi:keystone- -DFOREGROUND
+keystone  8897  8891  0 16:54 ?        00:00:12 (wsgi:keystone- -DFOREGROUND
+keystone  8898  8891  0 16:54 ?        00:00:08 (wsgi:keystone- -DFOREGROUND
+keystone  8899  8891  0 16:54 ?        00:00:05 (wsgi:keystone- -DFOREGROUND
+keystone  8900  8891  0 16:54 ?        00:00:07 (wsgi:keystone- -DFOREGROUND
+root     27570 11369  0 17:17 pts/0    00:00:00 grep --color=auto keystone
+
+# env | grep -i OS
+HOSTNAME=controller
+
+# cat /etc/httpd/conf.d/*
+Listen 8778
+
+<VirtualHost *:8778>
+  WSGIProcessGroup nova-placement-api
+  WSGIApplicationGroup %{GLOBAL}
+  WSGIPassAuthorization On
+  WSGIDaemonProcess nova-placement-api processes=3 threads=1 user=nova group=nova
+  WSGIScriptAlias / /usr/bin/nova-placement-api
+  <IfVersion >= 2.4>
+    ErrorLogFormat "%M"
+  </IfVersion>
+  ErrorLog /var/log/nova/nova-placement-api.log
+  #SSLEngine On
+  #SSLCertificateFile ...
+  #SSLCertificateKeyFile ...
+</VirtualHost>
+
+Alias /nova-placement-api /usr/bin/nova-placement-api
+<Location /nova-placement-api>
+  SetHandler wsgi-script
+  Options +ExecCGI
+  WSGIProcessGroup nova-placement-api
+  WSGIApplicationGroup %{GLOBAL}
+  WSGIPassAuthorization On
+</Location>
+
+<Directory /usr/bin>
+   <IfVersion >= 2.4>
+      Require all granted
+   </IfVersion>
+   <IfVersion < 2.4>
+      Order allow,deny
+      Allow from all
+   </IfVersion>
+</Directory>
+#
+# Directives controlling the display of server-generated directory listings.
+#
+# Required modules: mod_authz_core, mod_authz_host,
+#                   mod_autoindex, mod_alias
+#
+# To see the listing of a directory, the Options directive for the
+# directory must include "Indexes", and the directory must not contain
+# a file matching those listed in the DirectoryIndex directive.
+#
+
+#
+# IndexOptions: Controls the appearance of server-generated directory
+# listings.
+#
+IndexOptions FancyIndexing HTMLTable VersionSort
+
+# We include the /icons/ alias for FancyIndexed directory listings.  If
+# you do not use FancyIndexing, you may comment this out.
+#
+Alias /icons/ "/usr/share/httpd/icons/"
+
+<Directory "/usr/share/httpd/icons">
+    Options Indexes MultiViews FollowSymlinks
+    AllowOverride None
+    Require all granted
+</Directory>
+
+#
+# AddIcon* directives tell the server which icon to show for different
+# files or filename extensions.  These are only displayed for
+# FancyIndexed directories.
+#
+AddIconByEncoding (CMP,/icons/compressed.gif) x-compress x-gzip
+
+AddIconByType (TXT,/icons/text.gif) text/*
+AddIconByType (IMG,/icons/image2.gif) image/*
+AddIconByType (SND,/icons/sound2.gif) audio/*
+AddIconByType (VID,/icons/movie.gif) video/*
+
+AddIcon /icons/binary.gif .bin .exe
+AddIcon /icons/binhex.gif .hqx
+AddIcon /icons/tar.gif .tar
+AddIcon /icons/world2.gif .wrl .wrl.gz .vrml .vrm .iv
+AddIcon /icons/compressed.gif .Z .z .tgz .gz .zip
+AddIcon /icons/a.gif .ps .ai .eps
+AddIcon /icons/layout.gif .html .shtml .htm .pdf
+AddIcon /icons/text.gif .txt
+AddIcon /icons/c.gif .c
+AddIcon /icons/p.gif .pl .py
+AddIcon /icons/f.gif .for
+AddIcon /icons/dvi.gif .dvi
+AddIcon /icons/uuencoded.gif .uu
+AddIcon /icons/script.gif .conf .sh .shar .csh .ksh .tcl
+AddIcon /icons/tex.gif .tex
+AddIcon /icons/bomb.gif /core
+AddIcon /icons/bomb.gif */core.*
+
+AddIcon /icons/back.gif ..
+AddIcon /icons/hand.right.gif README
+AddIcon /icons/folder.gif ^^DIRECTORY^^
+AddIcon /icons/blank.gif ^^BLANKICON^^
+
+#
+# DefaultIcon is which icon to show for files which do not have an icon
+# explicitly set.
+#
+DefaultIcon /icons/unknown.gif
+
+#
+# AddDescription allows you to place a short description after a file in
+# server-generated indexes.  These are only displayed for FancyIndexed
+# directories.
+# Format: AddDescription "description" filename
+#
+#AddDescription "GZIP compressed document" .gz
+#AddDescription "tar archive" .tar
+#AddDescription "GZIP compressed tar archive" .tgz
+
+#
+# ReadmeName is the name of the README file the server will look for by
+# default, and append to directory listings.
+#
+# HeaderName is the name of a file which should be prepended to
+# directory indexes.
+ReadmeName README.html
+HeaderName HEADER.html
+
+#
+# IndexIgnore is a set of filenames which directory indexing should ignore
+# and not include in the listing.  Shell-style wildcarding is permitted.
+#
+IndexIgnore .??* *~ *# HEADER* README* RCS CVS *,v *,t
+
+WSGIDaemonProcess dashboard
+WSGIProcessGroup dashboard
+WSGISocketPrefix run/wsgi
+
+WSGIScriptAlias /dashboard /usr/share/openstack-dashboard/openstack_dashboard/wsgi/django.wsgi
+Alias /dashboard/static /usr/share/openstack-dashboard/static
+
+<Directory /usr/share/openstack-dashboard/openstack_dashboard/wsgi>
+  Options All
+  AllowOverride All
+  Require all granted
+</Directory>
+
+<Directory /usr/share/openstack-dashboard/static>
+  Options All
+  AllowOverride All
+  Require all granted
+</Directory>
+
+WSGIApplicationGroup %{GLOBAL}
+
+This directory holds configuration files for the Apache HTTP Server;
+any files in this directory which have the ".conf" extension will be
+processed as httpd configuration files.  The directory is used in
+addition to the directory /etc/httpd/conf.modules.d/, which contains
+configuration files necessary to load modules.
+
+Files are processed in alphabetical order.
+
+#
+# UserDir: The name of the directory that is appended onto a user's home
+# directory if a ~user request is received.
+#
+# The path to the end user account 'public_html' directory must be
+# accessible to the webserver userid.  This usually means that ~userid
+# must have permissions of 711, ~userid/public_html must have permissions
+# of 755, and documents contained therein must be world-readable.
+# Otherwise, the client will only receive a "403 Forbidden" message.
+#
+<IfModule mod_userdir.c>
+    #
+    # UserDir is disabled by default since it can confirm the presence
+    # of a username on the system (depending on home directory
+    # permissions).
+    #
+    UserDir disabled
+
+    #
+    # To enable requests to /~user/ to serve the user's public_html
+    # directory, remove the "UserDir disabled" line above, and uncomment
+    # the following line instead:
+    #
+    #UserDir public_html
+</IfModule>
+
+#
+# Control access to UserDir directories.  The following is an example
+# for a site where these directories are restricted to read-only.
+#
+<Directory "/home/*/public_html">
+    AllowOverride FileInfo AuthConfig Limit Indexes
+    Options MultiViews Indexes SymLinksIfOwnerMatch IncludesNoExec
+    Require method GET POST OPTIONS
+</Directory>
+
+#
+# This configuration file enables the default "Welcome" page if there
+# is no default index page present for the root URL.  To disable the
+# Welcome page, comment out all the lines below.
+#
+# NOTE: if this file is removed, it will be restored on upgrades.
+#
+<LocationMatch "^/+$">
+    Options -Indexes
+    ErrorDocument 403 /.noindex.html
+</LocationMatch>
+
+<Directory /usr/share/httpd/noindex>
+    AllowOverride None
+    Require all granted
+</Directory>
+
+Alias /.noindex.html /usr/share/httpd/noindex/index.html
+Alias /noindex/css/bootstrap.min.css /usr/share/httpd/noindex/css/bootstrap.min.css
+Alias /noindex/css/open-sans.css /usr/share/httpd/noindex/css/open-sans.css
+Alias /images/apache_pb.gif /usr/share/httpd/noindex/images/apache_pb.gif
+Alias /images/poweredby.png /usr/share/httpd/noindex/images/poweredby.png
+Listen 5000
+
+<VirtualHost *:5000>
+    WSGIDaemonProcess keystone-public processes=5 threads=1 user=keystone group=keystone display-name=%{GROUP}
+    WSGIProcessGroup keystone-public
+    WSGIScriptAlias / /usr/bin/keystone-wsgi-public
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+    LimitRequestBody 114688
+    <IfVersion >= 2.4>
+      ErrorLogFormat "%{cu}t %M"
+    </IfVersion>
+    ErrorLog /var/log/httpd/keystone.log
+    CustomLog /var/log/httpd/keystone_access.log combined
+
+    <Directory /usr/bin>
+        <IfVersion >= 2.4>
+            Require all granted
+        </IfVersion>
+        <IfVersion < 2.4>
+            Order allow,deny
+            Allow from all
+        </IfVersion>
+    </Directory>
+</VirtualHost>
+
+Alias /identity /usr/bin/keystone-wsgi-public
+<Location /identity>
+    SetHandler wsgi-script
+    Options +ExecCGI
+
+    WSGIProcessGroup keystone-public
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIPassAuthorization On
+</Location>
+
+#version=DEVEL
+# System authorization information
+auth --enableshadow --passalgo=sha512
+# Use CDROM installation media
+cdrom
+# Use graphical install
+graphical
+# Run the Setup Agent on first boot
+firstboot --enable
+ignoredisk --only-use=sda
+# Keyboard layouts
+keyboard --vckeymap=us --xlayouts='us'
+# System language
+lang en_US.UTF-8
+
+# Network information
+network  --bootproto=static --device=enp0s3 --ip=192.168.56.101 --netmask=255.255.255.0 --onboot=off --ipv6=auto --activate
+network  --bootproto=dhcp --device=enp0s8 --onboot=off --ipv6=auto --activate
+network  --bootproto=static --device=enp0s9 --ip=192.168.99.100 --netmask=255.255.255.0 --onboot=off --ipv6=auto --activate
+network  --hostname=controller
+
+# Root password
+rootpw --iscrypted $6$bCOu.SeDDgN5b7WL$sHn7gzsVbhsf9d2dh9VxQ4ktxWAw3MOIIKxMQlAGU570yL/X4DZkuLn3/GLiSwfMLgJ8cGqz1l.AVtx5rNEJC1
+# System services
+services --disabled="chronyd"
+# System timezone
+timezone Asia/Kolkata --isUtc --nontp
+user --groups=wheel --name=openstak --password=$6$wazmfuHHshbzKSBP$J66aLzkyzBXFCIJVs3CV2z6CeVEOhED5vnTysJlBoQb0NfcKruieazsmDF8hzu/d9u1OidwUQ.vlu7yMI7z1C. --iscrypted --gecos="OpenStak"
+# System bootloader configuration
+bootloader --append=" crashkernel=auto" --location=mbr --boot-drive=sda
+autopart --type=lvm
+# Partition clearing information
+clearpart --none --initlabel
+
+%packages
+@^minimal
+@core
+kexec-tools
+
+%end
+
+%addon com_redhat_kdump --enable --reserve-mb='auto'
+
+%end
+
+%anaconda
+pwpolicy root --minlen=6 --minquality=50 --notstrict --nochanges --notempty
+pwpolicy user --minlen=6 --minquality=50 --notstrict --nochanges --notempty
+pwpolicy luks --minlen=6 --minquality=50 --notstrict --nochanges --notempty
+%end  
+

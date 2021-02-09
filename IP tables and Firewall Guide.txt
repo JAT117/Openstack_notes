@@ -1,0 +1,68 @@
+IP tables and Linux Firewalls
+----------------------------------
+Chains:
+	Input 
+	Forward
+	Output
+	
+Different services is used for different protocols as:
+	iptables applies to IPv4.
+	ip6tables applies to IPv6.
+	arptables applies to ARP.
+	ebtables applies to Ethernet Frames.
+
+IPTables main files are:
+	/etc/init.d/iptables – init script to start|stop|restart and save rulesets.
+	/etc/sysconfig/iptables – where Rulesets are saved.
+	/sbin/iptables – binary.
+
+There are at present three tables:
+	Filter
+	NAT
+	Mangle
+
+Check status:
+	iptables -nLv
+	iptables -L
+	iptables -L -v
+	iptables -L | grep policy
+
+Depriciated:
+	/etc/init.d/iptables start 
+	/etc/init.d/iptables stop
+	/etc/init.d/iptables restart
+
+
+Firewalld configuration details are not stored in /etc/sysconfig/iptables. 
+Instead, configuration details are stored in various files in the /usr/lib/firewalld and /etc/firewalld directories.
+
+Systemd:
+	systemctl disable firewalld
+	systemctl stop firewalld
+
+yum install iptables-services
+
+Enable the service at boot-time:
+
+systemctl enable iptables
+Managing the service
+
+systemctl [stop|start|restart] iptables
+
+# systemctl disable NetworkManager
+# systemctl stop NetworkManager
+
+# systemctl enable network
+# systemctl start network
+
+to delete IPtable rules (flush) run: iptables -F
+
+https://www.tecmint.com/basic-guide-on-iptables-linux-firewall-tips-commands/
+https://www.hostinger.com/tutorials/iptables-tutorial
+
+
+Packet Filtering analysis of data against filters
+
+Proxy service 
+
+Stateful Inspection

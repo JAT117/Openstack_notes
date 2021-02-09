@@ -1,0 +1,40 @@
+Bridging
+-----------
+yum install bridge-utils -y
+brctl: bridge control
+
+brctl addbr <bridge-name>
+brctl addif <bridge-name> <host-interface-name>
+brctl show
+
+brctl stp br0 on //to enable STP and prevent loopbacks
+
+brctl showmacs <bridge-name>
+
+brctl command					Description
+====================================================
+setageing bridge time			Set ageing time
+setbridgeprio bridge prio		Set bridge priority (between 0 and 65535)
+setfd bridge time				Set bridge forward delay
+sethello bridge time			Set hello time
+setmaxage bridge time			Set max message age
+setgcint bridge time			Set garbage collection interval in seconds
+sethashel bridge int			Set hash elasticity
+sethashmax bridge int			Set hash max
+setmclmc bridge int				Set multicast last member count
+setmcrouter bridge int			Set multicast router
+setmcsnoop bridge int			Set multicast snooping
+setmcsqc bridge int				Set multicast startup query count
+setmclmi bridge time			Set multicast last member interval
+setmcmi bridge time				Set multicast membership interval
+setmcqpi bridge time			Set multicast querier interval
+setmcqi bridge time				Set multicast query interval
+setmcqri bridge time			Set multicast query response interval
+setmcqri bridge time			Set multicast startup query interval
+setpathcost bridge port cost	Set path cost
+setportprio bridge port prio	Set port priority (between 0 and 255)
+setportmcrouter bridge port int	Set port multicast router
+sethashel bridge int			Set hash elasticity value
+
+https://goyalankit.com/blog/linux-bridge
+https://www.thegeekstuff.com/2017/06/brctl-bridge/

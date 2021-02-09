@@ -1,0 +1,36 @@
+Openstack QOS
+
+QoS is defined as the ability to guarantee certain network requirements in order to satisfy a Service Level Agreement (SLA) between an application provider and end users.
+Bandwidth, latency, jitter, and reliability are some such requirements
+
+Create a QOS policy 
+
+#neutron qos-policy-create <policy-name>
+#neutron qos-bandwidth-rule-create --max-burst-kbps 6000 --max-kbps 8000 <policy_name>
+
+#neutron qos-bandwidth-limit-create --max-burst-kbps 600 --maxkbps 800 <policy_name>
+neutron --help | grep -i qos
+
+
+//check the port for the server whcih is associate for the fixed IP. 
+# openstack server show "VM_NAME"
+# openstack port list | grep -i "FIXED_IP_OF_VM"
+
+//Above command you will get port number.
+
+# neutron port update 'port.no' --qos-policy 'policy_name'
+
+
+//Check the policy is updated correctly on the VM network port:
+
+# ssh "compute node" ( Of VM)
+# virsh domiflist "compute node"
+
+You can get the interface name of tap defice. The same name will be used for OVS with suffix changed to qvo
+
+# ovs-vsctl list interface 'qvo****'  
+# openstack port list --device-owner network:router_interface --router "routername"
+
+
+neutron qos-policy-create <policy_name>
+neutron qos-bandwidth

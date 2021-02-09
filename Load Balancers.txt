@@ -1,0 +1,47 @@
+Load Balancers
+
+Load balancer
+	The load balancer occupies a neutron network port and has an IP address assigned from a subnet.
+
+Listener
+	Load balancers can listen for requests on multiple ports. Each one of those ports is specified by a listener.
+
+Pool
+	A pool holds a list of members that serve content through the load balancer.
+
+Member
+	Members are servers that serve traffic behind a load balancer. 
+	Each member is specified by the IP address and port that it uses to serve traffic.
+	
+Health monitor
+	Members may go offline from time to time and health monitors divert traffic away from members that are not responding properly. Health monitors are associated with pools.
+
+
+
+https://docs.openstack.org/mitaka/networking-guide/config-lbaas.html
+
+
+lbaas-loadbalancer-create --name <lb_name> <subnet>
+lbaas-listener-create
+lbaas-pool-create
+lbaas-member-create
+lbaas-healthmonitor-create
+
+# neutron lbaas-loadbalancer-create --name <load_balancer_name> <allocated_subnet>
+# neutron lbaas-listener-create --loadbalancer <load_balancer_name> --protocol HTTP --protocol-port 80 --name <listener>
+# neutron lbaas-pool-create --lb-algorithm ROUND_ROBIN --listener <listener> --protocol HTTP --name <pool_name>
+# openstack server list  ##Find IP Address of the server.
+# neutron lbaas-member-create --protocol-port 80 --subnet <allocated_subnet> --address <server Internal IP> <pool_name>
+# neutron lbaas-healthmonitor-create --delay 5 --timeout 2 --max-retries 3 --type HTTP --pool <pool_name> --name <health_monitor>
+# neutron lbaas-loadbalancer-show <load_balancer_name>
+	
+# neutron lbaas-loadbalancer-create --name finance-lb1 finance-subnet 
+# neutron lbaas-listener-create --loadbalancer finance-lb1 --protocol HTTP --protocol-port 80 --name finance-listener1
+# neutron lbaas-pool-create --lb-algorithm ROUND_ROBIN --listener finance-listener1 --protocol HTTP --name finance-pool1
+# openstack server list  ## Find IP Address of the server.
+# neutron lbaas-member-create --protocol-port 80 --subnet finance-subnet1 --address <IP172> finance-pool1
+# neutron lbaas-healthmonitor-create --delay 5 --timeout 2 --max-retries 3 --type HTTP --pool finance-pool1 --name finance-health1
+# neutron lbaas-loadbalancer-show finance-lb1
+# neutron floatingip-associate "Floating_IP_ID" "Load balancer_VIP_PORT_ID"
+
+curl <floating ip>

@@ -1,0 +1,19 @@
+Storage Node (Cinder)
+- 
+Severial Disks are grouped together as one "volume"
+Contains disks for persistant storage
+
+Block Device Driver
+LVM (DEFAULT)
+NFS
+RBD (Ceph)
+VMware VMDK
+
+Storage Network (iSCSI)
+		|
+	Cinder Volume
+	LVM Driver
+	Disks
+		|
+Managment Network (control Plane)
+

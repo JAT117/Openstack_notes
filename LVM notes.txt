@@ -1,0 +1,58 @@
+Configure LVM in Linux
+----------------------------------
+To identify your disk/partition, use sudo blkid
+
+example output:
+/dev/sr0: UUID="2019-09-11-18-50-31-00" LABEL="CentOS 7 x86_64" TYPE="iso9660" PTTYPE="dos" 
+/dev/sda1: UUID="7f4feab4-2cd2-4a51-a832-c20e1bd0ccd5" TYPE="xfs" 
+/dev/sda2: UUID="Ody21F-2wHT-AWoE-dVUJ-qgQj-7lgV-1YDJd9" TYPE="LVM2_member" 
+/dev/mapper/centos_nokia-root: UUID="1db79f60-c213-4beb-9f91-175c5fbe4314" TYPE="xfs" 
+/dev/mapper/centos_nokia-swap: UUID="0a5dcc7f-77c9-4946-a76e-608bbee00011" TYPE="swap" 
+
+
+1)Resize stroage pools
+2)Flexable Stroage capacity
+3)Use striped, mirrored, and snapshot volumes
+
+Physical Volume (PV)
+Volume Group (VG)
+Logical Volume (LV)
+
+Small computer system interface (SCSI)
+
+Create a physical Volume:
+	pvcreate pv_01 /dev/sbd /dev/sbc (these are disks) 
+	pvdisplay
+	pvs
+	
+Create Volume Group	
+	vgcreate vg-01 /dev/sdb /dev/sdc
+	vgdisplay
+	vgs
+	
+Create Logical Volumes
+	Linear Logical Volumes
+		lvcreate -L 1G -n LV_linear vg-01
+		lvdisplay
+		lvs
+		
+	Striped Logical Volume
+		lvcreate -L 1G -i2 -I64 -n lv_stripe vg-01
+		lvdisplay
+		lvs
+		
+	Mirrored Logical Volume
+		lvcreate -L 200M -m1 -n lv_mirror vg-01
+		lvdisplay
+		lvs
+		
+		
+Activation of LVM
+	lvchange -ay /dev/vg-01/lv_linear
+	vgchange -ay vg_01
+	
+
+https://linoxide.com/linux-how-to/lvm-configuration-linux/	
+https://en.wikipedia.org/wiki/SCSI	
+https://askubuntu.com/questions/371049/how-are-dev-sda-and-dev-sdb-chosen
+https://wiki.archlinux.org/index.php/Persistent_block_device_naming

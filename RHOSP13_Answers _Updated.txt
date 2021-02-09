@@ -1,0 +1,398 @@
+Q1. Director node Management network allocation pool Prefix , Octd Start, Octd End.
+
+# openstack network list
+# openstack network show management
+# openstack subnet show "SUBNET_NAME_ASSOCIATED_WITH_THE_MANAGEMENT_NETWORK"
+
+You can find the allocation pool range for the network management
+
+Prefix - 24
+Allocation Pool range - 172.10.1.110, 172.10.1.116
+Start octd - 110
+End octd - 116
+
+Q2. find the interface associated with br-int in controller
+
+ssh controller0
+ovs-vsctl show | grep -A10 br-int --> find the interface
+	or 
+ovs-vsctl list-ports br-int
+
+Q3. Fernet Key rotate on Director node  (login into director node as stack user)
+
+openstack workflow list | grep -i rotate --> workflowname
+openstack workflow execution create <workflowname> '{"container":"overcloud"}'
+ssh controller0 
+ls -l /var/lib/config-data/puppet-generated/keystone/etc/keystone/fernet-key/ --> verify new key created
+
+Q4:Configure tenants and users
+Create a Domain called Exam210 & create the following projects
+  Create the following OpenStack projects:
+	Engineering
+	Production
+
+Create a Devops group add the below users in it:
+
+	Robert should be a member of Engineering and should be an administrator.
+	The email address for Robert should be Robert@domain1.example.com.
+	George should be a member of Engineering. 
+	
+	The email address for George should be George@domain1.example.com.
+	William should be a member of Production and should be an administrator.
+	
+	The email address for William should be William@domain1.example.com.
+	
+	John should be a member of Production. The email address for John should be John@domain1.example.com.
+	
+  The password for all user accounts must be redhat.
+
+# source overcloudrc
+
+# openstack domain create Exam210
+
+
+#openstack project create Engineering --domain Exam210
+#openstack project create Production --domain Exam210
+
+# openstack user create --domain Exam210 --project Engineering --email Robert@domain1.example.com --password redhat Robert
+# openstack user create --domain Exam210 --project Engineering --email George@domain1.example.com --password redhat George
+# openstack user create --domain Exam210 --project Production --email William@domain1.example.com --password redhat William
+# openstack user create --domain Exam210 --project Production --email John@domain1.example.com --password redhat John
+
+
+# openstack role add --project Engineering --project-domain Exam210 --user Robert --user-domain Exam210 admin
+# openstack role add --project Engineering --project-domain Exam210 --user George --user-domain Exam210 _member_
+# openstack role add --project Production --project-domain Exam210 --user William --user-domain Exam210 admin
+# openstack role add --project Production --project-domain Exam210 --user John --user-domain Exam210 _member_
+
+
+(To verify 
+#openstack role assignment --name)
+
+# openstack group create Devops --domain Exam210
+# openstack group add user --user-domain Exam210 --group-domain Exam210 Devops Robert George William John
+
+(To Verify
+#openstack group contains user Devops George --user-domain Exam210 --group-domain Exam210
+
+Output -  george in group Devops)
+
+Once Completed create a source file for the user Robert, 
+
+# cp overcloudrc robert_engg_rc
+
+[ Modify the below variables, 
+NAME = Robert
+USER_DOMAIN = Exam210
+PROJECT = Engineering
+PROJECT_DOMAIN = Exam210
+PASSWORD = redhat]
+
+Q5:Create resources
+  Create the resources necessary to deploy server instances.
+	Create a public virtual machine flavor using the following attributes:
+		Flavor name:m1.petite
+		Virtual machine RAM: 1024MB
+		CPUs: 1
+
+	Add the image located at http://rhgls.domain1.example.com/OpenStack/small.img to the Glance Image Service.This image should be named web.The image format is QCOW2 and the image should be available to everyone.
+	Create the following security groups for project Engineering:
+		The group named ssh should allow access to port 22 and ICMP ping from the Internet
+		The group named web should allow access to port 80 from the Internet.
+	Create a key pair named webkey in the project Engineering. This key pair should be stored in the file /home/stack/webkey.pem on director.domain1.example.com
+
+Ans:
+source the robert_engg_rc file	
+
+# source robert_engg_rc
+
+# openstack flavor create --public --vcpus 1 --ram 1024 m1.petite
+
+# wget http://rhgls.domain1.example.com/OpenStack/small.img
+
+# openstack image create --public --disk-format qcow2 --file small.img web
+
+# openstack security group create ssh
+
+# openstack security group create web
+
+# openstack security group rule create --proto tcp --dst-port 22:22 ssh
+# openstack security group rule create --proto icmp ssh
+# openstack security group rule create --proto tcp --dst-port 80:80 web
+
+# openstack keypair create webkey.pem > /home/stack/webkey.pem
+
+# chmod 600 /home/stack/webkey.pem
+
+
+Q6:Configure networking
+  Configure networking for Engineering according to the following requirements:
+	The project has a network named private.This network should have a subnet named internal that uses the network address 192.168.122.0/24 have the DHCP enabled
+	The project has a network named public. This network should have a subnet named external that uses the network address 172.24.1.0/24 , IP should be with in the range of 172.24.1.110 to 172.24.1.119 & DHCP enabled . Also, it use the flat network & physical network as datacentre.
+	Both networks are attached to a router, ex210-router so that instances in this project can access the public network.
+
+   Create a Network called storagenet & it has a vlan & physical network name called vlanprovider1. Subnet name as stor-subnet that has a range of  10.1.15.0/24. This should be a different network it should not connect with router ex210-router
+
+Ans: 
+
+# openstack network create private
+# openstack network create --external --share --provider-network-type flat --provider-physical-network datacentre public
+# openstack subnet create --network private --subnet-range 192.168.122.0/24 --dhcp internal
+# openstack subnet create --network public --subnet-range 172.24.1.0/24 --allocation-pool start=172.24.1.110,end=172.24.1.119 --dhcp external
+# openstack router create ex210-router
+# openstack router add subnet ex210-router internal
+# openstack router set --external-gateway public ex210-router
+
+
+Check the vlan tag ID for the provider network which they asked to create,
+# ovs-vsctl get open . external-ids:ovn-bridge-mappings
+
+Output - "datacentre:br-ex,vlanprovider1:br-eth3,vlanprovider2:br-eth4,storage:br-trunk
+
+[ So, vlanprovider1 is available as physical network ]
+
+Now check the vlan tag id for the vlanprovider1,
+
+# grep ^network_vlan_ranges /var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/ml2_conf.ini
+
+output - network_vlan_ranges=datacentre:1:1000,vlanprovider1:101:104,vlanprovider2:101:104, storage:30:30 
+
+[ So, vlanprovider1 is available between 101 to 104 vlan tag ID , we can use any of these to create a network, we will take 103 as vlan id. ]
+
+# openstack network create --provider-network-type vlan --provider-physical-network vlanprovider1 storagenet 
+
+# openstack subnet create --network storagenet --subnet-range 10.1.15.0/24 --dhcp stor-subnet
+
+To Verify 
+#openstack network list
+#openstack subnet list
+
+
+
+Q7:Launch an instance
+  Launch an instance named webserver according to the following requirements:
+	The instance uses the Engineering project
+	The instance uses the web image
+	The instance uses a m1.petite flavor virtual machine
+	The instance is connected to the private network
+	The instance uses the following security groups ssh web
+	The instance uses the key named webkey
+
+Ans:
+
+# openstack server create --image web --flavor m1.petite --nic net-id=private --security-group ssh --security-group web --key-name webkey webserver
+
+
+Q8:Configure SSH access
+  Associate a floating IP in the subnet 172.24.1.0/24 to the instance webserver . The floating IP should be accessible via SSH from other hosts using the webkey key pair and the user cloud-user
+
+# openstack floating ip create public
+
+# openstack server add floating ip webserver "FLOATING_IP"
+
+[ Check the webserver via ssh from workstation & check the web url with the floating ip ]
+
+
+Q9:Create a block storage volume named storage that is 2Gb in size in the Engineering project.
+
+# openstack volume create --size 2 storage
+
+
+Q10:Attach block storage
+  Attach the block storage volume named storage to webserver as /dev/vdb.
+
+# openstack server add volume --device /dev/vdb webserver storage
+
+Q11:Snapshot a storage volume
+  Create a block storage snapshot named strgsnap that is a snapshot of storage in the project Engineering
+
+[ You cannot create a snapshot for the the attached volume, volume status should be in available mode for taking snapshot ]
+
+# openstack server remove volume webserver storage
+# openstack volume snapshot create --volume storage strgsnap
+
+# openstack server add volume --device /dev/vdb webserver storage
+
+
+Q12:Create a Heat stack
+  Use the command line interface to create a Heat template in the project Engineering. The Heat template will be broken and you will need to fix any errors to successfully launch the instance. Do the following to the Heat template:
+	Fix the template so that it successfully works
+	Add a UNIX group called stackgroup to the instance
+    Once you have configured the template,create an environment file and launch the Heat stack with the as follows:
+	Stack Name: HeatStack
+	Heat Template: use materials/web_server.yaml on director.domain1.example.com
+	Project/Tenant: Engineering
+	Public Network: public
+	Private Network: private
+	Private Subnet: internal Key
+	Name: webkey
+	Flavor: m1.petite
+	Image: web
+
+
+[ 210 - LAB is available for the same ]
+
+Ans: 
+
+web_server.yaml file have the below bugs that needs to rectify, 
+
+key_nam   --> this suppose to be key_name
+
+there is a space should be corrected on that file. It can be found during the dry-run. Beofre go with dry-run create a environment file.
+
+Add the "groupadd stackgroup" in the web_server.yaml file.  
+
+Environment File : [ This environment variable will get from the .yaml file as get_param metrics ]
+
+parameters:
+
+  project_net = private
+  project_subnet = internal
+  external_net = public
+  image = web
+  keyname = webkey
+  flavor = m1.petite
+
+
+### Once created the the environment file then we can do a dry-run
+
+# openstack stack create --dry-run -t web_server.yaml -e "ENVIRONMENT_FILE" HeatStack
+
+# openstack stack create -t web_server.yaml -e "ENVIRONMENT_FILE" HeatStack --enable-rollback
+
+# openstack stack list
+
+[ Once completed the stack, just check that web url which created by the stack ]
+
+
+Q13:Customize an existing image and launch a VM
+  Modify the existing image osp-exam-server.qcow2 that is located under /root on director.domain1.example.com so that:
+	The package httpd is installed and its relative service is enabled
+	The webroot /var/www/html has an index.html file that contains the words Klaatu barada nikto
+	The image contains a new user sheila with no password
+	Upload the image into OpenStack with the name web-server.You should specify the following as part of the upload:
+		Minimum memory usage 1024 MiB
+		Minimum disk size 4 GiB
+	Create a flavor named m1.web that corresponds to the resource limits specified when uploading the image
+	Once the image has been uploaded launch an instance in the Engineering project,named custom-web-server that uses the flavor m1.web and associate a floating IP in the subnet 172.24.1.0/24 to the instance.
+	Once the instance has been started, it should be possible to browse the floating IP address with a web client and see the phraseKlaatu barada nikto.
+	It must also be possible to ssh to the instance using a PEM key named webkey. This key should be stored in the file /home/stack/webkey.pem on director.domain1.example.com
+
+
+Ans:
+
+Get the exam-server.qcow2 image,
+
+Guestfish package is already installed on the director node. 
+
+# guestfish -i --network -a /tmp/exam-server.qcow2 
+
+[ It may ask for to set the environment for guestfish liberary ]
+
+# export LIBGUESTFS_BACKEND=direct
+
+><fs> command "yum install -y httpd"
+><fs> command "systemctl enable httpd"
+><fs> command "systemctl is-enabled httpd"
+><fs> write /var/www/html/index.html "Klaatu barada nikto"
+><fs> command "cat /var/www/html/index.html"
+><fs> command "useradd sheila"
+><fs> command "id sheila"
+><fs> selinux-relabel /etc/selinux/targeted/contexts/files/file_contexts /
+><fs> exit
+
+
+# openstack image create --file exam-server.qcow2 --min-ram 1024 --min-disk 4 web-server
+# openstack flavor create --ram 1024 --disk 4 --vcpus 1 m1.web
+# openstack server create --image web-server --flavor m1.web --nic net-id=private --key-name webkey --security-group web custom-web-server
+# openstack floating ip create public
+# openstack server add floating ip custom-web-server "FLOATING_IP"
+
+Once the floating ip assigned , check that ip in the web URL. you should get the word as "Klaatu barada nikto"
+
+
+Q14: Create a rabbitmq user as ash in controller & set password as redhat. This user should have permission to acces, read, write. Enable the trace_on.
+
+
+Ans:
+
+# docker exec rabbitmq-bundle-docker-0 rabbitmqctl add_user ash redhat
+
+# docker exec rabbitmq-bundle-docker-0 rabbitmqctl set_permissions ash ".*" ".*" ".*"
+
+# docker exec rabbitmq-bundle-docker-0 rabbitmqctl trace_on
+
+
+Q15:Create a Swift container
+  Create a Swift container named warehouse in project Engineering which can be used by Robert to store files.
+  Place a copy of http://host.domain1.example.com/conf_data.tgz into the container. The new object should have the same filename as the original.
+  This data should be downloaded into webserver under /home/cloud-user/ directory. 
+
+Ans:
+
+# openstack container create warehouse
+
+# wget http://host.domain1.example.com/conf_data.tgz
+
+# openstack object create --name conf_data.tgz warehouse conf_data.tgz
+
+# scp -i /home/stack/webkey.pem conf_data.tgz cloud-user@"WEBSERVER_FLOATING_IP":/home/cloud-user/.
+
+# ssh -i /home/stack/webkey.pem cloud-user@"WEBSERVER_FLOATING_IP" ls -lrt /home/cloud-user/
+
+
+Q16: OVN - Metadata Name Space for the Network which Created [ Network Name - internal ]
+
+
+login to compute node and find the namesapce
+
+ssh root@compute0
+#ip netns --> ovnmeta-uuid (namsepace)
+
+
+Q17: Create a Share filesystems & have access to Engineering Project. Filesystem type would be cephfs & the protocol is related to ceph. Set " Some permission to False" .  This fileshare have permission of read/write to cloud-user.
+
+#source robert_engg_rc
+#manila type-create cephfstype false
+#manila create --name=eng-share  --share-type cephfstype cephfs 1
+
+Creating Cephx user
+#ssh controller0
+#ceph --name=client.manila --keyring=/etc/ceph/ceph.client.manila.keyring auth get-or-create client.cloud-user > /root/cloud-user.keyring
+#logout
+
+#manila access-allow eng-share cephx cloud-user 
+#manila share-export-location-list eng-share --> mountpoint
+
+Q18: Create a new instnace with --user-data ( Script file provided ), Instance should be having Private and Storage network. From that instnace access the shared drive.  
+
+source robert_engg_rc
+openstack server create  webserver --user-data /home/stack/userdata.file --network engnet --network stornet --image web --flavor m1.petite --key-name web-key 
+openstack floating ip create public --> FLOATING_IP
+openstack server add floating ip webserver FLOATING_IP 
+
+mkdir manila
+scp root@controller0:{/etc/ceph/ceph.conf,/root/cloud-user.keyring} manila/
+scp -i /home/stack/webkey.pem manila/* cloud-user@FLOATING_IP:
+
+ssh -i /home/stack/webkey.pem cloud-user@FLOATING_IP
+$sudo -i
+#mkdir -vp /mnt/ceph
+#ceph-fuse /mnt/ceph --id=cloud-user --conf=/home/cloud-user/ceph.conf --client-mountpoint=<mountpoint> 
+
+Q19: find the redis password
+
+#ssh root@controller0
+#docker exec redis-bundle-docker-0 ^grep require /etc/redis.conf
+requirepass <password>
+
+docker exec redis-bundle-docker-0 grep "requirepass" /etc/redis.conf
+
+or
+
+vim /var/lib/config-data/puppet-generated/erdis/etc/redis.conf --> find "requirepass"
+
+
+
+
+

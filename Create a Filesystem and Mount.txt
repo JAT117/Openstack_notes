@@ -1,0 +1,8 @@
+Create a Filesystem and Mount
+---------------------------
+dd if=/dev/zero of=file.fs bs=1024 count=1024
+sudo mkfs.ext2 file.fs
+sudo cd /mnt; mkdir /mnt/tmp
+sudo mount file.fs /mnt/tmp/
+mount | grep file.fs
+df -h

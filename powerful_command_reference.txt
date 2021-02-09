@@ -1,0 +1,73 @@
+Magic Powers:
+
+yum install -y epel-release
+
+NetworkManager
+--------------
+nmcli device status
+nmcli connection show
+nmtui
+
+nano ~/.bashrc
+-------
+alias ni='ip l | grep '^\S' | cut -d: -f2'
+alias gg='cd !*; ls -lsthG'
+alias t ='tail -f'
+alias ll='ls -lath'
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+alias gg='cd $1 ; ll'
+alias ol='watch who -alp'
+alias net='watch ss -tulpn'
+alias sctl='systemctl status'
+alias lsps='ps -elf $1 | grep $2'
+
+.bash_profile
+-------------
+
+netstat -venputa | grep -i httpd
+cat /etc/redhat-release
+
+cat /path/to/file grep ^ /dev/null *
+cat /path/to/file | egrep -v "^#|^$"
+egrep -c '^flags.*(vmx|svm)' /proc/cpuinfo
+virt-host-validate
+systemctl list-units --type service --state running,failed
+openstack-status
+last | head
+
+
+The best way is to use rsync over SSH
+
+rsync -a -essh /source/ user@dest-server:/dest/
+
+rsync -a -essh user@source-server:/source/ /dest/
+
+My favorites options are -Pazvessh --delete :
+
+    -a : archive mode (include a lot of default common options, including preserving symlinks)
+    -z : compress
+    -v : verbose : show files
+    -P : show progess as files done/remaining files
+    -e ssh : do rsync in ssh protocol
+    --delete : delete files in the destination that are not anymore in the source
+
+
+
+https://www.youtube.com/channel/UC-0PMn0rKV_ZOHF-qX6N3fQ/videos
+https://github.com/PacktPublishing/Learning-OpenStack-Networking-Third-Edition
+https://books.google.com/books?id=TMhsDwAAQBAJ&pg=PA40&lpg=PA40&dq=mariadb+memcached+network+neutron+rabbitmq&source=bl&ots=PopPfEA10d&sig=ACfU3U2-WY9xoU33b-nSOm-2YPJDNvTq3Q&hl=en&sa=X&ved=2ahUKEwjFhsaP0YXmAhVlCjQIHYSmCl4Q6AEwBXoECDAQAQ#v=onepage&q&f=true
+https://www.unixtutorial.org/check-centos-version
+https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/9/html/director_installation_and_usage/chap-introduction
+https://www.corelan.be/index.php/2009/07/19/exploit-writing-tutorial-part-1-stack-based-overflows/
+https://overthewire.org/wargames/bandit/bandit0.html
+
+
+https://en.wikibooks.org/wiki/QEMU/Networking
+https://developers.redhat.com/blog/2018/10/22/introduction-to-linux-interfaces-for-virtual-networking/
+https://werewblog.wordpress.com/2015/12/31/create-a-virtual-network-with-qemukvm/
+https://linuxconfig.org/configuring-virtual-network-interfaces-in-linux
+https://developers.redhat.com/blog/2018/10/22/introduction-to-linux-interfaces-for-virtual-networking/
+https://wiki.qemu.org/Documentation/Networking
+https://www.cyberciti.biz/faq/howto-linux-renew-dhcp-client-ip-address/
