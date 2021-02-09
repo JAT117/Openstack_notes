@@ -21,10 +21,28 @@ https://success.alienvault.com/s/article/How-do-I-resolve-error-rabbitmq-server-
 nano /etc/memcached.conf
 OPTIONS="-l 127.0.0.1,::1,controller"
 
-change to binding address??
+Memcached
+--------
 
-systemctl enable memcached.service
-systemctl start memcached.service
+The Identity service authentication mechanism for services uses Memcached to cache tokens. 
+The memcached service typically runs on the controller node. 
+For production deployments, we recommend enabling a combination of firewalling, authentication, and encryption to secure it.
+
+
+# yum install memcached python-memcached
+Edit the /etc/sysconfig/memcached file and complete the following actions:
+
+Configure the service to use the management IP address of the controller node. This is to enable access by other nodes via the management network:
+
+OPTIONS="-l 127.0.0.1,::1,controller"
+
+ Note Change the existing line OPTIONS="-l 127.0.0.1,::1".
+
+Finalize installation
+Start the Memcached service and configure it to start when the system boots:
+
+# systemctl enable memcached.service
+# systemctl start memcached.service
 
 
 --glances.conf
