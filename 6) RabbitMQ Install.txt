@@ -1,5 +1,5 @@
-RabbitMQ install
----------------
+RabbitMQ and Memcached Installation
+------------------------------
 
 https://success.alienvault.com/s/article/How-do-I-resolve-error-rabbitmq-server-failed
 
