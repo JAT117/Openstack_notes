@@ -1,6 +1,10 @@
 Linux File Types
 ================
 
+//Apart from file types but still a useful command
+$file file.txt
+file.txt: ASCII text
+
 Common files
 -------------
 	Regular Files(-):
@@ -69,5 +73,5 @@ Special files(This category is having 5 sub types in it.)
 			
 ()rwxrwxrwx 2 owner group all users Date Time <name>
 
--rw-rw-r-- 1 john students 0 Jan 17 time  
+-rw-rw-r-- 1 jorb students 0 Jan 17 time  
 drwxrwxrwx 2 owner group all users Date Time <Directory Name>
