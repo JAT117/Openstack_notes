@@ -1,9 +1,6 @@
 RabbitMQ and Memcached Installation
 ------------------------------
-
 https://success.alienvault.com/s/article/How-do-I-resolve-error-rabbitmq-server-failed
-
-3.6.5.1
 
 #yum install rabbitmq-server
 
