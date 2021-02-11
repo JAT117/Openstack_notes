@@ -32,15 +32,14 @@ Depriciated:
 	/etc/init.d/iptables stop
 	/etc/init.d/iptables restart
 
-
 Firewalld configuration details are not stored in /etc/sysconfig/iptables. 
 Instead, configuration details are stored in various files in the /usr/lib/firewalld and /etc/firewalld directories.
 
-Systemd:
+Systemd commands for firewall daemon:
 	systemctl disable firewalld
 	systemctl stop firewalld
 
-yum install iptables-services
+#yum install iptables-services
 
 Enable the service at boot-time:
 
