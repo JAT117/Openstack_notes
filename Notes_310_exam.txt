@@ -450,5 +450,3 @@ assign physical network to namespace
 
 https://docs.openstack.org/glance/queens/admin/troubleshooting.html
 https://access.redhat.com/documentation/en-us/red_hat_openstack_platform/10/html/networking_guide/sec-connect-instance
-
-
