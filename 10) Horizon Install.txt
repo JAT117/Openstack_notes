@@ -8,11 +8,11 @@ Horizon
 Configure the dashboard to use OpenStack services on the controller node:
 
 OPENSTACK_HOST = "controller"
+
 Allow your hosts to access the dashboard:
-
 ALLOWED_HOSTS = ['one.example.com', 'two.example.com']
- Note
 
+Note:
 ALLOWED_HOSTS can also be [‘*’] to accept all hosts. This may be useful for development work, but is potentially insecure and should not be used in production. See https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts for further information.
 
 Configure the memcached session storage service:
@@ -60,6 +60,7 @@ OPENSTACK_NEUTRON_NETWORK = {
     'enable_vpn': False,
     'enable_fip_topology_check': False,
 }
+
 Optionally, configure the time zone:
 
 TIME_ZONE = "TIME_ZONE"
@@ -73,7 +74,6 @@ Finalize installation
 Restart the web server and session storage service:
 
 # systemctl restart httpd.service memcached.service
-
 
 Horizon : admin / password
 http://192.168.56.101/dashboard
